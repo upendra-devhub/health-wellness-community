@@ -1,5 +1,6 @@
 const express = require("express");
 const path = require("path");
+const mongoose = require("mongoose");
 
 const bootstrapRoutes = require("./routes/bootstrapRoutes");
 const commentsRoutes = require("./routes/commentsRoutes");
