@@ -38,11 +38,19 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at top right, rgba(149, 212, 179, 0.18), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 251, 1) 22%);
+    radial-gradient(
+      circle at top right,
+      rgba(149, 212, 179, 0.18),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.8),
+      rgba(248, 250, 251, 1) 22%
+    );
 }
 
 img {
@@ -69,7 +77,11 @@ a {
 }
 
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
   user-select: none;
 }
 
@@ -133,7 +145,7 @@ a {
 .community-hero__content h1,
 .profile-hero h1,
 .health-layout h1 {
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 .brand {
@@ -194,7 +206,10 @@ a {
   justify-content: center;
   background: transparent;
   color: var(--muted);
-  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
 }
 
 .icon-button:hover,
@@ -314,11 +329,18 @@ a {
   padding: 14px 16px;
   border-radius: 999px;
   color: #68727f;
-  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
 }
 
 .sidebar-nav__item.is-active {
-  background: linear-gradient(90deg, rgba(146, 247, 195, 0.28), rgba(146, 247, 195, 0.55));
+  background: linear-gradient(
+    90deg,
+    rgba(146, 247, 195, 0.28),
+    rgba(146, 247, 195, 0.55)
+  );
   color: var(--primary);
   font-weight: 700;
 }
@@ -443,7 +465,9 @@ a {
   border-radius: 20px;
   background: var(--surface-soft);
   color: var(--text);
-  transition: outline-color 180ms ease, background-color 180ms ease;
+  transition:
+    outline-color 180ms ease,
+    background-color 180ms ease;
 }
 
 .textarea:focus,
@@ -499,7 +523,9 @@ a {
   font-weight: 700;
   background: linear-gradient(135deg, var(--primary), var(--primary-soft));
   box-shadow: var(--shadow-float);
-  transition: transform 180ms ease, filter 180ms ease;
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
 }
 
 .button-primary:hover {
@@ -513,7 +539,7 @@ a {
 
 .button-primary[disabled],
 .soft-button[disabled] {
-  cursor: not-allowed;
+  cursor: pointer;
   opacity: 0.6;
   transform: none;
 }
@@ -686,7 +712,11 @@ a {
   aspect-ratio: 16 / 9;
   width: 100%;
   object-fit: cover;
-  background: linear-gradient(135deg, rgba(15, 82, 56, 0.2), rgba(149, 212, 179, 0.5));
+  background: linear-gradient(
+    135deg,
+    rgba(15, 82, 56, 0.2),
+    rgba(149, 212, 179, 0.5)
+  );
 }
 
 .post-card__footer {
@@ -717,6 +747,11 @@ a {
 .auth-footer a:hover,
 .comment-link:hover {
   color: var(--primary);
+}
+
+.post-action[disabled] {
+  cursor: pointer;
+  opacity: 0.9;
 }
 
 .comment-preview {
@@ -753,7 +788,7 @@ a {
 .community-grid h3,
 .health-section h2 {
   margin: 0;
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
   letter-spacing: -0.02em;
 }
 
@@ -900,7 +935,7 @@ a {
 
 .ring__meta strong {
   display: block;
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 1.8rem;
   letter-spacing: -0.03em;
   color: var(--primary);
@@ -1094,8 +1129,16 @@ a {
   padding: 48px;
   border-radius: 40px;
   background:
-    radial-gradient(circle at top left, rgba(146, 247, 195, 0.32), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(236, 238, 239, 0.92));
+    radial-gradient(
+      circle at top left,
+      rgba(146, 247, 195, 0.32),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(236, 238, 239, 0.92)
+    );
   box-shadow: var(--shadow-soft);
   display: grid;
   gap: 22px;
@@ -1110,7 +1153,7 @@ a {
 
 .auth-hero h1 {
   margin: 0;
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: clamp(2.3rem, 5vw, 4rem);
   line-height: 1.02;
   letter-spacing: -0.05em;
@@ -1139,7 +1182,7 @@ a {
 .mini-card strong {
   display: block;
   margin-top: 10px;
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 1.3rem;
 }
 
@@ -1168,7 +1211,7 @@ a {
 
 .auth-card__header h2 {
   margin: 0 0 8px;
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 2rem;
   letter-spacing: -0.03em;
 }
@@ -1193,7 +1236,12 @@ a {
 .loading-shimmer {
   height: 14px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(236, 238, 239, 0.8), rgba(255, 255, 255, 0.95), rgba(236, 238, 239, 0.8));
+  background: linear-gradient(
+    90deg,
+    rgba(236, 238, 239, 0.8),
+    rgba(255, 255, 255, 0.95),
+    rgba(236, 238, 239, 0.8)
+  );
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
 }

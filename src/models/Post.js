@@ -20,6 +20,10 @@ const postSchema = new Schema({
     type: Number,
     default: 0
   },
+  likedBy: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   comments: [{
     userId: {
       type: Schema.Types.ObjectId,

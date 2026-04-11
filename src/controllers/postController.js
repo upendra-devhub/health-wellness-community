@@ -3,7 +3,7 @@ const Post = require('../models/Post');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { AppError } = require('../utils/errors');
-const { buildPostQuery } = require('../utils/postQuery');
+const { buildPostQuery, decoratePostsForUser } = require('../utils/postQuery');
 const {
   ensureObjectId,
   ensureOptionalString,
@@ -28,7 +28,10 @@ const getPosts = asyncHandler(async (req, res) => {
     filter.communityId = { $in: joinedCommunityIds };
   }
 
-  const posts = await buildPostQuery(Post.find(filter).sort({ createdAt: -1 }));
+  const posts = await decoratePostsForUser(
+    await buildPostQuery(Post.find(filter).sort({ createdAt: -1 })),
+    req.user._id
+  );
 
   res.json({
     posts
@@ -67,6 +70,7 @@ const createPost = asyncHandler(async (req, res) => {
     photo,
     description,
     likes: 0,
+    likedBy: [],
     comments: [],
     tags,
     communityId
@@ -77,7 +81,10 @@ const createPost = asyncHandler(async (req, res) => {
 
   await Promise.all([user.save(), community.save()]);
 
-  const populatedPost = await buildPostQuery(Post.findById(post._id));
+  const populatedPost = await decoratePostsForUser(
+    await buildPostQuery(Post.findById(post._id)),
+    req.user._id
+  );
 
   res.status(201).json({
     message: 'Post created successfully.',
@@ -88,7 +95,10 @@ const createPost = asyncHandler(async (req, res) => {
 const getPostById = asyncHandler(async (req, res) => {
   const postId = ensureObjectId(req.params.id, 'Post id');
 
-  const post = await buildPostQuery(Post.findById(postId));
+  const post = await decoratePostsForUser(
+    await buildPostQuery(Post.findById(postId)),
+    req.user._id
+  );
 
   if (!post) {
     throw new AppError('Post not found.', 404);
@@ -102,17 +112,33 @@ const getPostById = asyncHandler(async (req, res) => {
 const likePost = asyncHandler(async (req, res) => {
   const postId = ensureObjectId(req.params.id, 'Post id');
 
-  const post = await buildPostQuery(
-    Post.findByIdAndUpdate(postId, { $inc: { likes: 1 } }, { new: true, runValidators: true })
-  );
+  const post = await Post.findById(postId);
 
   if (!post) {
     throw new AppError('Post not found.', 404);
   }
 
+  const currentUserId = req.user._id.toString();
+  const alreadyLiked = (post.likedBy || []).some((likedUserId) => likedUserId.toString() === currentUserId);
+
+  if (alreadyLiked) {
+    post.likedBy = post.likedBy.filter((likedUserId) => likedUserId.toString() !== currentUserId);
+    post.likes = Math.max(0, (post.likes || 0) - 1);
+  } else {
+    post.likedBy.push(req.user._id);
+    post.likes = (post.likes || 0) + 1;
+  }
+
+  await post.save();
+
+  const populatedPost = await decoratePostsForUser(
+    await buildPostQuery(Post.findById(postId)),
+    req.user._id
+  );
+
   res.json({
-    message: 'Post liked.',
-    post
+    message: alreadyLiked ? 'Post unliked.' : 'Post liked.',
+    post: populatedPost
   });
 });
 
@@ -133,7 +159,10 @@ const addComment = asyncHandler(async (req, res) => {
 
   await post.save();
 
-  const populatedPost = await buildPostQuery(Post.findById(postId));
+  const populatedPost = await decoratePostsForUser(
+    await buildPostQuery(Post.findById(postId)),
+    req.user._id
+  );
 
   res.json({
     message: 'Comment added.',

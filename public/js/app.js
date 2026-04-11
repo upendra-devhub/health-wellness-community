@@ -246,6 +246,7 @@ function filterPosts(posts) {
 }
 
 function renderPostCard(post, options = {}) {
+  const isLiked = Boolean(post.likedByCurrentUser);
   const showCommentPreview = options.showCommentPreview !== false;
   const commentPreview = showCommentPreview && post.comments?.length
     ? `
@@ -297,8 +298,8 @@ function renderPostCard(post, options = {}) {
 
       <div class="post-card__footer">
         <div class="post-card__actions">
-          <button class="post-action" type="button" data-action="like-post" data-post-id="${post._id}">
-            <span class="material-symbols-outlined">favorite</span>
+          <button class="post-action ${isLiked ? 'is-active' : ''}" type="button" data-action="like-post" data-post-id="${post._id}">
+            <span class="material-symbols-outlined"${isLiked ? ' style="font-variation-settings: \'FILL\' 1, \'wght\' 400, \'GRAD\' 0, \'opsz\' 24;"' : ''}>favorite</span>
             <span>${formatCompactNumber(post.likes || 0)}</span>
           </button>
           <button class="post-action" type="button" data-route="/post/${post._id}">
@@ -834,7 +835,11 @@ async function handleJoinCommunity(communityId) {
   }
 }
 
-async function handleLikePost(postId) {
+async function handleLikePost(postId, button) {
+  if (button) {
+    button.disabled = true;
+  }
+
   try {
     await apiFetch(`/api/posts/${postId}/like`, {
       method: 'POST'
@@ -842,6 +847,9 @@ async function handleLikePost(postId) {
 
     await refreshView({ skipLoading: true });
   } catch (error) {
+    if (button) {
+      button.disabled = false;
+    }
     showToast(error.message, 'error');
   }
 }
@@ -1035,7 +1043,7 @@ document.addEventListener('click', async (event) => {
   }
 
   if (action === 'like-post') {
-    await handleLikePost(actionButton.dataset.postId);
+    await handleLikePost(actionButton.dataset.postId, actionButton);
     return;
   }
 
