@@ -5,7 +5,7 @@ const { authCookieName, jwtSecret } = require('../config/env');
 function getCookieOptions() {
   return {
     httpOnly: true,
-    // sameSite: 'lax',
+    sameSite: 'Strict',
     secure: true,
     maxAge: 24 * 60 * 60 * 1000
   };
