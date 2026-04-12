@@ -8,6 +8,7 @@ import {
   matchesSearch,
   renderAvatar
 } from './helpers.js';
+import { createPostLikeManager } from './postLikeManager.js';
 
 const state = {
   profile: null,
@@ -24,9 +25,12 @@ const state = {
   currentCommunity: null,
   communityPosts: [],
   currentPost: null,
+  shellHydrated: false,
   search: '',
   feedFilter: 'all'
 };
+
+const likeManager = createPostLikeManager();
 
 const elements = {
   viewRoot: document.getElementById('view-root'),
@@ -121,6 +125,108 @@ function getTrendingCommunities() {
     .slice(0, 3);
 }
 
+function getPostCollections() {
+  return [state.homePosts, state.profilePosts, state.communityPosts];
+}
+
+function visitLocalPost(postId, visitor) {
+  const normalizedPostId = String(postId);
+
+  getPostCollections().forEach((posts) => {
+    posts.forEach((post) => {
+      if (post?._id === normalizedPostId) {
+        visitor(post);
+      }
+    });
+  });
+
+  if (state.currentPost?._id === normalizedPostId) {
+    visitor(state.currentPost);
+  }
+}
+
+function getLocalPostSnapshot(postId) {
+  let snapshot = null;
+
+  visitLocalPost(postId, (post) => {
+    if (!snapshot) {
+      snapshot = {
+        likesCount: post.likes || 0,
+        authorId: post.createdBy?._id || null
+      };
+    }
+  });
+
+  return snapshot || {
+    likesCount: 0,
+    authorId: null
+  };
+}
+
+function updateProfileLikesSummary(delta) {
+  if (!delta) {
+    return;
+  }
+
+  state.profileStats.likesCount = Math.max(0, (state.profileStats.likesCount || 0) + delta);
+
+  const likesNode = elements.profileStatsSidebar.querySelector('[data-profile-likes]');
+  if (likesNode) {
+    likesNode.textContent = formatCompactNumber(state.profileStats.likesCount);
+  }
+}
+
+function syncLikeButtons(postId) {
+  const postSnapshot = getLocalPostSnapshot(postId);
+  const liked = likeManager.isLiked(postId);
+  const pending = likeManager.isPending(postId);
+
+  document
+    .querySelectorAll(`[data-action="like-post"][data-post-id="${postId}"]`)
+    .forEach((button) => {
+      const icon = button.querySelector('.material-symbols-outlined');
+      const count = button.querySelector('[data-like-count]');
+
+      button.classList.toggle('is-active', liked);
+      button.disabled = pending;
+      button.setAttribute('aria-pressed', String(liked));
+
+      if (icon) {
+        icon.style.fontVariationSettings = liked
+          ? "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24"
+          : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24";
+      }
+
+      if (count) {
+        count.textContent = formatCompactNumber(postSnapshot.likesCount);
+      }
+    });
+}
+
+function applyLikeStateToLocalPosts(postId, liked, likesCount) {
+  let previousLikesCount = null;
+  let affectsCurrentUsersPost = false;
+
+  visitLocalPost(postId, (post) => {
+    if (previousLikesCount === null) {
+      previousLikesCount = post.likes || 0;
+    }
+
+    post.likes = likesCount;
+    post.likedByCurrentUser = liked;
+
+    if (post.createdBy?._id === state.profile?._id) {
+      affectsCurrentUsersPost = true;
+    }
+  });
+
+  if (previousLikesCount !== null && affectsCurrentUsersPost) {
+    updateProfileLikesSummary(likesCount - previousLikesCount);
+  }
+
+  syncLikeButtons(postId);
+}
+
 function renderSidebar() {
   const profileName = state.profile?.name || 'Soft Health';
   elements.headerAvatar.innerHTML = renderAvatar(state.profile || { name: profileName }, 'small');
@@ -188,7 +294,7 @@ function renderSidebar() {
         <span>Circles</span>
       </div>
       <div class="profile-stat">
-        <strong>${formatCompactNumber(state.profileStats.likesCount)}</strong>
+        <strong data-profile-likes>${formatCompactNumber(state.profileStats.likesCount)}</strong>
         <span>Likes</span>
       </div>
     </div>
@@ -246,7 +352,7 @@ function filterPosts(posts) {
 }
 
 function renderPostCard(post, options = {}) {
-  const isLiked = Boolean(post.likedByCurrentUser);
+  const isLiked = likeManager.isLiked(post._id);
   const showCommentPreview = options.showCommentPreview !== false;
   const commentPreview = showCommentPreview && post.comments?.length
     ? `
@@ -298,9 +404,9 @@ function renderPostCard(post, options = {}) {
 
       <div class="post-card__footer">
         <div class="post-card__actions">
-          <button class="post-action ${isLiked ? 'is-active' : ''}" type="button" data-action="like-post" data-post-id="${post._id}">
+          <button class="post-action ${isLiked ? 'is-active' : ''}" type="button" data-action="like-post" data-post-id="${post._id}" aria-pressed="${String(isLiked)}">
             <span class="material-symbols-outlined"${isLiked ? ' style="font-variation-settings: \'FILL\' 1, \'wght\' 400, \'GRAD\' 0, \'opsz\' 24;"' : ''}>favorite</span>
-            <span>${formatCompactNumber(post.likes || 0)}</span>
+            <span data-like-count>${formatCompactNumber(post.likes || 0)}</span>
           </button>
           <button class="post-action" type="button" data-route="/post/${post._id}">
             <span class="material-symbols-outlined">chat_bubble</span>
@@ -736,7 +842,11 @@ function renderCurrentView() {
   }
 }
 
-async function loadShellData() {
+async function loadShellData(options = {}) {
+  if (state.shellHydrated && !options.force) {
+    return;
+  }
+
   const [profileData, communitiesData, healthData] = await Promise.all([
     apiFetch('/api/users/profile'),
     apiFetch('/api/communities'),
@@ -748,6 +858,8 @@ async function loadShellData() {
   state.profileStats = profileData.stats;
   state.communities = communitiesData.communities;
   state.health = healthData.health;
+  likeManager.replaceLikedPosts(profileData.user?.likedPosts || []);
+  state.shellHydrated = true;
 
   const validCommunityIds = new Set(getJoinedCommunities().map((community) => community._id));
   if (state.feedFilter !== 'all' && !validCommunityIds.has(state.feedFilter)) {
@@ -788,7 +900,7 @@ async function refreshView(options = {}) {
   }
 
   try {
-    await loadShellData();
+    await loadShellData({ force: options.refreshShell });
     await loadViewData();
     renderSidebar();
     renderCurrentView();
@@ -829,27 +941,39 @@ async function handleJoinCommunity(communityId) {
     });
 
     showToast('Community joined successfully.');
-    await refreshView({ skipLoading: true });
+    await refreshView({ skipLoading: true, refreshShell: true });
   } catch (error) {
     showToast(error.message, 'error');
   }
 }
 
-async function handleLikePost(postId, button) {
-  if (button) {
-    button.disabled = true;
+async function handleLikePost(postId) {
+  const snapshot = getLocalPostSnapshot(postId);
+  const optimisticState = likeManager.beginOptimisticToggle(postId, snapshot.likesCount);
+
+  if (!optimisticState) {
+    return;
   }
 
+  applyLikeStateToLocalPosts(postId, optimisticState.liked, optimisticState.likesCount);
+
   try {
-    await apiFetch(`/api/posts/${postId}/like`, {
-      method: 'POST'
+    const response = await apiFetch(`/api/posts/${postId}/like`, {
+      method: 'POST',
+      body: JSON.stringify({
+        liked: optimisticState.liked
+      })
     });
 
-    await refreshView({ skipLoading: true });
+    const confirmedState = likeManager.confirm(response.postId, response.liked, response.likesCount);
+    applyLikeStateToLocalPosts(response.postId, confirmedState.liked, confirmedState.likesCount);
   } catch (error) {
-    if (button) {
-      button.disabled = false;
+    const rollbackState = likeManager.rollback(postId);
+
+    if (rollbackState) {
+      applyLikeStateToLocalPosts(postId, rollbackState.liked, rollbackState.likesCount);
     }
+
     showToast(error.message, 'error');
   }
 }
@@ -874,7 +998,7 @@ async function handleCreatePost(form) {
 
     showToast('Post published.');
     form.reset();
-    await refreshView({ skipLoading: true });
+    await refreshView({ skipLoading: true, refreshShell: true });
   } catch (error) {
     showToast(error.message, 'error');
   } finally {
@@ -901,7 +1025,7 @@ async function handleProfileUpdate(form) {
     });
 
     showToast('Profile updated.');
-    await refreshView({ skipLoading: true });
+    await refreshView({ skipLoading: true, refreshShell: true });
   } catch (error) {
     showToast(error.message, 'error');
   } finally {
@@ -955,7 +1079,7 @@ async function handleHealthUpdate(form) {
     });
 
     showToast('Health metrics updated.');
-    await refreshView({ skipLoading: true });
+    await refreshView({ skipLoading: true, refreshShell: true });
   } catch (error) {
     showToast(error.message, 'error');
   } finally {
@@ -1043,7 +1167,7 @@ document.addEventListener('click', async (event) => {
   }
 
   if (action === 'like-post') {
-    await handleLikePost(actionButton.dataset.postId, actionButton);
+    await handleLikePost(actionButton.dataset.postId);
     return;
   }
 

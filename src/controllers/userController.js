@@ -5,11 +5,26 @@ const { AppError } = require('../utils/errors');
 const { ensureOptionalString, normalizeUsername } = require('../utils/validation');
 const { buildPostQuery, decoratePostsForUser } = require('../utils/postQuery');
 
+function buildUserResponse(user) {
+  return {
+    _id: user._id,
+    name: user.name,
+    profilePicture: user.profilePicture,
+    email: user.email,
+    username: user.username,
+    posts: user.posts,
+    likedPosts: user.likedPosts || [],
+    communitiesJoined: user.communitiesJoined
+  };
+}
+
 const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).populate(
+  const user = await User.findById(req.user._id)
+    .select('name profilePicture email username posts likedPosts communitiesJoined')
+    .populate(
     'communitiesJoined',
     'communityName description noOfActiveMembers communityPhoto'
-  );
+    );
 
   if (!user) {
     throw new AppError('User not found.', 404);
@@ -72,7 +87,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   res.json({
     message: 'Profile updated successfully.',
-    user
+    user: buildUserResponse(user)
   });
 });
 

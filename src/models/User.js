@@ -10,12 +10,25 @@ const userSchema = new Schema({
     type: String,
     default: ''
   },
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
   username: {
     type: String,
     required: true,
     unique: true
   },
   posts: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Post'
+  }],
+  likedPosts: [{
     type: Schema.Types.ObjectId,
     ref: 'Post'
   }],

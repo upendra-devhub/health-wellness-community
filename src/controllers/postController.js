@@ -4,7 +4,9 @@ const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { AppError } = require('../utils/errors');
 const { buildPostQuery, decoratePostsForUser } = require('../utils/postQuery');
+const { setPostLikeState } = require('../services/postLikeService');
 const {
+  ensureBoolean,
   ensureObjectId,
   ensureOptionalString,
   ensureString,
@@ -111,34 +113,17 @@ const getPostById = asyncHandler(async (req, res) => {
 
 const likePost = asyncHandler(async (req, res) => {
   const postId = ensureObjectId(req.params.id, 'Post id');
-
-  const post = await Post.findById(postId);
-
-  if (!post) {
-    throw new AppError('Post not found.', 404);
-  }
-
-  const currentUserId = req.user._id.toString();
-  const alreadyLiked = (post.likedBy || []).some((likedUserId) => likedUserId.toString() === currentUserId);
-
-  if (alreadyLiked) {
-    post.likedBy = post.likedBy.filter((likedUserId) => likedUserId.toString() !== currentUserId);
-    post.likes = Math.max(0, (post.likes || 0) - 1);
-  } else {
-    post.likedBy.push(req.user._id);
-    post.likes = (post.likes || 0) + 1;
-  }
-
-  await post.save();
-
-  const populatedPost = await decoratePostsForUser(
-    await buildPostQuery(Post.findById(postId)),
-    req.user._id
-  );
+  const liked = ensureBoolean(req.body.liked, 'Liked state');
+  const result = await setPostLikeState({
+    postId,
+    userId: req.user._id,
+    liked
+  });
 
   res.json({
-    message: alreadyLiked ? 'Post unliked.' : 'Post liked.',
-    post: populatedPost
+    postId: result.postId,
+    liked: result.liked,
+    likesCount: result.likesCount
   });
 });
 
