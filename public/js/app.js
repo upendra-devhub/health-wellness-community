@@ -17,6 +17,16 @@ const PROFILE_TABS = [
   { id: 'top', label: 'Top Posts' },
   { id: 'new', label: 'New Posts' }
 ];
+const ACTIVITY_TARGETS = {
+  walking: 10000,
+  running: 5,
+  sleep: 8
+};
+const ACTIVITY_METRICS = [
+  { key: 'walking', label: 'Walking', unit: 'steps', colorClass: 'dashboard-stat--walking' },
+  { key: 'running', label: 'Running', unit: 'km', colorClass: 'dashboard-stat--running' },
+  { key: 'sleep', label: 'Sleep', unit: 'hours', colorClass: 'dashboard-stat--sleep' }
+];
 
 const state = {
   profile: null,
@@ -29,6 +39,10 @@ const state = {
   },
   communities: [],
   health: null,
+  weeklyData: [],
+  selectedDay: '',
+  healthLogDate: '',
+  healthLogModalOpen: false,
   homePosts: [],
   currentCommunity: null,
   communityPosts: [],
@@ -1060,92 +1074,284 @@ function renderPostDetailView() {
   `;
 }
 
-function renderHealthView() {
-  const health = state.health || { waterIntake: 0, waterGoal: 2500, hydrationPercent: 0, steps: 0, stepsPercent: 0, stepsGoal: 10000 };
+function getClientDateKey(date = new Date()) {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 10);
+}
 
-  elements.viewRoot.innerHTML = `
-    <section class="health-layout">
-      <div class="page-heading">
-        <h1>Health tracker</h1>
-        <p>Water intake, water goal, and steps are persisted in the dedicated HealthTracker model linked to your user account.</p>
-      </div>
+function parseActivityDate(dateKey) {
+  return new Date(`${dateKey}T00:00:00`);
+}
 
-      <div class="health-grid">
-        <article class="health-card">
-          <div class="progress-line">
-            <span>Water progress</span>
-            <strong>${escapeHtml(formatWater(health.waterIntake))} / ${escapeHtml(formatWater(health.waterGoal))}</strong>
-          </div>
-          <div class="progress-bar">
-            <span style="width:${health.hydrationPercent}%"></span>
-          </div>
-          <p>${health.hydrationPercent}% of your hydration goal reached.</p>
+function getPreviousDateKey(dateKey) {
+  const date = parseActivityDate(dateKey);
+  date.setDate(date.getDate() - 1);
+
+  return getClientDateKey(date);
+}
+
+function formatActivityDayLabel(dateKey, options = {}) {
+  const date = parseActivityDate(dateKey);
+  const formatter = new Intl.DateTimeFormat(undefined, {
+    weekday: options.long ? 'long' : 'short',
+    month: options.long ? 'short' : undefined,
+    day: options.long ? 'numeric' : undefined
+  });
+
+  return formatter.format(date);
+}
+
+function formatActivityMetric(key, value) {
+  const numberValue = Number(value || 0);
+
+  if (key === 'walking') {
+    return `${formatCompactNumber(Math.round(numberValue))} steps`;
+  }
+
+  if (key === 'running') {
+    return `${numberValue.toFixed(numberValue % 1 ? 1 : 0)} km`;
+  }
+
+  return `${numberValue.toFixed(numberValue % 1 ? 1 : 0)} h`;
+}
+
+function normalizeActivityDay(day = {}, fallbackDate = getClientDateKey()) {
+  const walking = Number(day.walking ?? day.steps ?? 0);
+  const running = Number(day.running ?? 0);
+  const sleep = Number(day.sleep ?? 0);
+
+  return {
+    date: String(day.date || fallbackDate),
+    walking: Number.isFinite(walking) ? walking : 0,
+    running: Number.isFinite(running) ? running : 0,
+    sleep: Number.isFinite(sleep) ? sleep : 0,
+    hasData: Boolean(day.hasData)
+  };
+}
+
+function getDashboardTodayKey() {
+  return state.weeklyData[state.weeklyData.length - 1]?.date || getClientDateKey();
+}
+
+function getActivityDay(dateKey = state.selectedDay) {
+  const resolvedDate = dateKey || getDashboardTodayKey();
+  return state.weeklyData.find((day) => day.date === resolvedDate) || normalizeActivityDay({ date: resolvedDate });
+}
+
+function getActivityScores(day) {
+  const walkingScore = Math.min(day.walking / ACTIVITY_TARGETS.walking, 1);
+  const runningScore = Math.min(day.running / ACTIVITY_TARGETS.running, 1);
+  const sleepScore = Math.min(day.sleep / ACTIVITY_TARGETS.sleep, 1);
+  const totalScore = (walkingScore + runningScore + sleepScore) / 3;
+  const scoreTotal = walkingScore + runningScore + sleepScore;
+
+  return {
+    walkingScore,
+    runningScore,
+    sleepScore,
+    heightPercent: Math.round(totalScore * 100),
+    walkingShare: scoreTotal ? (walkingScore / scoreTotal) * 100 : 0,
+    runningShare: scoreTotal ? (runningScore / scoreTotal) * 100 : 0,
+    sleepShare: scoreTotal ? (sleepScore / scoreTotal) * 100 : 0
+  };
+}
+
+function getMetricComparison(day, metricKey) {
+  const previousDay = getActivityDay(getPreviousDateKey(day.date));
+
+  if (!previousDay.hasData) {
+    return 'No previous day logged';
+  }
+
+  const delta = Number(day[metricKey] || 0) - Number(previousDay[metricKey] || 0);
+
+  if (delta === 0) {
+    return 'Same as previous day';
+  }
+
+  const direction = delta > 0 ? '+' : '-';
+  return `${direction}${formatActivityMetric(metricKey, Math.abs(delta))} vs previous day`;
+}
+
+function renderActivityChart() {
+  return `
+    <div class="dashboard-chart" aria-label="Last 7 days health activity">
+      ${state.weeklyData.map((day) => {
+        const scores = getActivityScores(day);
+        const isSelected = day.date === state.selectedDay;
+        const tooltip = [
+          `Walking: ${formatActivityMetric('walking', day.walking)}`,
+          `Running: ${formatActivityMetric('running', day.running)}`,
+          `Sleep: ${formatActivityMetric('sleep', day.sleep)}`
+        ].join(' | ');
+
+        return `
+          <button
+            class="dashboard-chart__day ${isSelected ? 'is-selected' : ''}"
+            type="button"
+            data-action="select-dashboard-day"
+            data-date="${escapeHtml(day.date)}"
+            aria-pressed="${String(isSelected)}"
+            aria-label="${escapeHtml(`${formatActivityDayLabel(day.date, { long: true })}: ${tooltip}`)}">
+            <span class="dashboard-chart__tooltip" role="tooltip">
+              <strong>${escapeHtml(formatActivityDayLabel(day.date, { long: true }))}</strong>
+              <span>${escapeHtml(formatActivityMetric('walking', day.walking))}</span>
+              <span>${escapeHtml(formatActivityMetric('running', day.running))}</span>
+              <span>${escapeHtml(formatActivityMetric('sleep', day.sleep))}</span>
+            </span>
+            <span class="dashboard-chart__track">
+              <span class="dashboard-chart__stack" style="--bar-height:${scores.heightPercent}%; --walking-height:${scores.walkingShare}%; --running-height:${scores.runningShare}%; --sleep-height:${scores.sleepShare}%;">
+                <span class="dashboard-chart__segment dashboard-chart__segment--sleep"></span>
+                <span class="dashboard-chart__segment dashboard-chart__segment--running"></span>
+                <span class="dashboard-chart__segment dashboard-chart__segment--walking"></span>
+              </span>
+            </span>
+            <span class="dashboard-chart__label">${escapeHtml(formatActivityDayLabel(day.date))}</span>
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderDailyStats(day) {
+  return `
+    <div class="dashboard-stat-grid">
+      ${ACTIVITY_METRICS.map((metric) => `
+        <article class="dashboard-stat ${metric.colorClass}">
+          <span class="dashboard-stat__label">${escapeHtml(metric.label)}</span>
+          <strong>${escapeHtml(formatActivityMetric(metric.key, day[metric.key]))}</strong>
+          <span class="dashboard-stat__comparison">${escapeHtml(getMetricComparison(day, metric.key))}</span>
         </article>
+      `).join('')}
+    </div>
+  `;
+}
 
-        <article class="health-card">
-          <div class="ring-row">
-            <div class="ring__meta">
-              <span class="mini-card__label">Daily Steps</span>
-              <strong>${formatCompactNumber(health.steps)}</strong>
-              <span>${health.stepsPercent}% of ${formatCompactNumber(health.stepsGoal)} goal</span>
-            </div>
-            <div class="ring">
-              <svg viewBox="0 0 120 120" aria-hidden="true">
-                <circle cx="60" cy="60" r="48" fill="none" style="stroke:var(--ring-track);" stroke-width="10"></circle>
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="48"
-                  fill="none"
-                  style="stroke:var(--ring-progress);"
-                  stroke-width="10"
-                  stroke-linecap="round"
-                  stroke-dasharray="301.59"
-                  stroke-dashoffset="${301.59 - (301.59 * health.stepsPercent) / 100}">
-                </circle>
-              </svg>
-              <div class="ring__icon">
-                <span class="material-symbols-outlined">monitoring</span>
-              </div>
-            </div>
-          </div>
-        </article>
-      </div>
+function renderTodayLogPanel() {
+  const todayKey = getDashboardTodayKey();
+  const today = getActivityDay(todayKey);
 
-      <article class="detail-card">
-        <div class="detail-card__header">
-          <div>
-            <h2>Update daily metrics</h2>
-            <p class="muted-copy">Adjust your hydration goal or log the latest numbers from your day.</p>
-          </div>
+  if (!today.hasData) {
+    return `
+      <article class="detail-card dashboard-log-card">
+        <div>
+          <span class="micro-chip">Today</span>
+          <h2>Daily log</h2>
+          <p class="muted-copy">Add today's walking, running, and sleep when you are ready.</p>
         </div>
+        <button class="button-primary" type="button" data-action="open-health-log-modal" data-date="${escapeHtml(todayKey)}">Log Activity</button>
+      </article>
+    `;
+  }
 
-        <form id="health-form" class="health-form">
+  return `
+    <article class="detail-card dashboard-log-card">
+      <div>
+        <span class="micro-chip">Today</span>
+        <h2>Activity saved</h2>
+        <div class="dashboard-log-summary">
+          <span>${escapeHtml(formatActivityMetric('walking', today.walking))}</span>
+          <span>${escapeHtml(formatActivityMetric('running', today.running))}</span>
+          <span>${escapeHtml(formatActivityMetric('sleep', today.sleep))}</span>
+        </div>
+      </div>
+      <button class="soft-button" type="button" data-action="open-health-log-modal" data-date="${escapeHtml(todayKey)}">Edit Activity</button>
+    </article>
+  `;
+}
+
+function renderHealthLogModal() {
+  if (!state.healthLogModalOpen) {
+    return '';
+  }
+
+  const dateKey = state.healthLogDate || getDashboardTodayKey();
+  const day = getActivityDay(dateKey);
+  const title = day.hasData ? 'Edit Activity' : 'Log Activity';
+
+  return `
+    <div id="health-log-modal" class="modal-shell dashboard-modal is-open" aria-hidden="false">
+      <div class="modal-shell__backdrop" data-action="dismiss-health-log-modal"></div>
+
+      <div class="composer-card composer-modal" role="dialog" aria-modal="true" aria-labelledby="health-log-modal-title">
+        <form id="health-log-form" class="stack-form" novalidate>
+          <div class="composer-modal__header">
+            <div class="composer-modal__heading">
+              <h2 id="health-log-modal-title">${escapeHtml(title)}</h2>
+              <p class="muted-copy">${escapeHtml(formatActivityDayLabel(dateKey, { long: true }))}</p>
+            </div>
+
+            <button class="soft-button" type="button" data-action="dismiss-health-log-modal">Close</button>
+          </div>
+
+          <input type="hidden" name="date" value="${escapeHtml(dateKey)}">
+
           <div class="field-grid">
             <label class="field">
-              <span>Water intake (ml)</span>
-              <input type="number" min="0" name="waterIntake" value="${escapeHtml(String(health.waterIntake || 0))}" required>
+              <span>Steps</span>
+              <input type="number" min="0" step="1" name="steps" value="${escapeHtml(String(day.walking || 0))}" required>
             </label>
 
             <label class="field">
-              <span>Water goal (ml)</span>
-              <input type="number" min="0" name="waterGoal" value="${escapeHtml(String(health.waterGoal || 0))}" required>
+              <span>Running (km)</span>
+              <input type="number" min="0" step="0.1" name="running" value="${escapeHtml(String(day.running || 0))}" required>
             </label>
           </div>
 
           <label class="field">
-            <span>Steps</span>
-            <input type="number" min="0" name="steps" value="${escapeHtml(String(health.steps || 0))}" required>
+            <span>Sleep (hours)</span>
+            <input type="number" min="0" step="0.25" name="sleep" value="${escapeHtml(String(day.sleep || 0))}" required>
           </label>
 
-          <div class="health-inline-actions">
-            <button class="button-primary" type="submit">Save metrics</button>
-            <button class="soft-button" type="button" data-action="health-quick-add" data-field="waterIntake" data-amount="250">+250 ml</button>
-            <button class="soft-button" type="button" data-action="health-quick-add" data-field="steps" data-amount="500">+500 steps</button>
+          <div class="composer-actions composer-actions--modal">
+            <span class="helper-text">Saved activity updates the dashboard and today's tracker.</span>
+            <button class="button-primary" type="submit">Save</button>
           </div>
         </form>
+      </div>
+    </div>
+  `;
+}
+
+function renderHealthView() {
+  if (!state.weeklyData.length) {
+    state.weeklyData = Array.from({ length: 7 }, (_item, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - index));
+      return normalizeActivityDay({ date: getClientDateKey(date) });
+    });
+  }
+
+  if (!state.selectedDay) {
+    state.selectedDay = getDashboardTodayKey();
+  }
+
+  const selectedDay = getActivityDay(state.selectedDay);
+
+  elements.viewRoot.innerHTML = `
+    <section class="health-layout">
+      <div class="page-heading">
+        <h1>Dashboard</h1>
+        <p>Review the last seven days, compare daily movement and sleep, and keep today's activity current.</p>
+      </div>
+
+      <article class="detail-card">
+        <div class="detail-card__header detail-card__header--stacked">
+          <div>
+            <h2>Health activity</h2>
+            <p class="muted-copy">Stacked by walking, running, and sleep against daily targets.</p>
+          </div>
+          <span class="micro-chip">${escapeHtml(formatActivityDayLabel(selectedDay.date, { long: true }))}</span>
+        </div>
+
+        ${renderActivityChart()}
       </article>
+
+      ${renderDailyStats(selectedDay)}
+      ${renderTodayLogPanel()}
     </section>
+    ${renderHealthLogModal()}
   `;
 }
 
@@ -1226,6 +1432,15 @@ async function loadViewData() {
   if (route.name === 'post') {
     const response = await apiFetch(`/api/posts/${route.id}`);
     state.currentPost = response.post;
+    return;
+  }
+
+  if (route.name === 'health') {
+    const response = await apiFetch('/api/health/weekly');
+    state.weeklyData = (response.weeklyData || []).map((day) => normalizeActivityDay(day));
+    state.selectedDay = state.weeklyData.some((day) => day.date === state.selectedDay)
+      ? state.selectedDay
+      : response.selectedDay || getDashboardTodayKey();
   }
 }
 
@@ -1431,6 +1646,57 @@ async function handleHealthUpdate(form) {
   }
 }
 
+function openHealthLogModal(dateKey = getDashboardTodayKey()) {
+  state.healthLogDate = dateKey;
+  state.healthLogModalOpen = true;
+  renderCurrentView();
+
+  requestAnimationFrame(() => {
+    const firstInput = document.querySelector('#health-log-form input[name="steps"]');
+    firstInput?.focus();
+  });
+}
+
+function closeHealthLogModal() {
+  if (!state.healthLogModalOpen) {
+    return;
+  }
+
+  state.healthLogModalOpen = false;
+  state.healthLogDate = '';
+  renderCurrentView();
+}
+
+async function handleHealthLogSubmit(form) {
+  const submitButton = form.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+  submitButton.textContent = 'Saving...';
+
+  try {
+    const formData = new FormData(form);
+
+    await apiFetch('/api/health/log', {
+      method: 'POST',
+      body: JSON.stringify({
+        date: formData.get('date'),
+        steps: Number(formData.get('steps')),
+        running: Number(formData.get('running')),
+        sleep: Number(formData.get('sleep'))
+      })
+    });
+
+    state.selectedDay = String(formData.get('date') || getDashboardTodayKey());
+    state.healthLogModalOpen = false;
+    state.healthLogDate = '';
+    showToast('Activity saved.');
+    await refreshView({ skipLoading: true, refreshShell: true });
+  } catch (error) {
+    showToast(error.message, 'error');
+    submitButton.disabled = false;
+    submitButton.textContent = 'Save';
+  }
+}
+
 async function handleSignOut() {
   try {
     await apiFetch('/api/auth/logout', {
@@ -1506,6 +1772,22 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (action === 'select-dashboard-day') {
+    state.selectedDay = actionButton.dataset.date || getDashboardTodayKey();
+    renderCurrentView();
+    return;
+  }
+
+  if (action === 'open-health-log-modal') {
+    openHealthLogModal(actionButton.dataset.date || getDashboardTodayKey());
+    return;
+  }
+
+  if (action === 'dismiss-health-log-modal') {
+    closeHealthLogModal();
+    return;
+  }
+
   if (action === 'open-post-modal') {
     openPostModal(actionButton.dataset.communityId || '');
     return;
@@ -1557,6 +1839,11 @@ document.addEventListener('submit', async (event) => {
     event.preventDefault();
     await handleHealthUpdate(event.target);
   }
+
+  if (event.target.id === 'health-log-form') {
+    event.preventDefault();
+    await handleHealthLogSubmit(event.target);
+  }
 });
 
 elements.profileMenuButton.addEventListener('click', (event) => {
@@ -1578,6 +1865,11 @@ elements.postImageInput.addEventListener('change', (event) => {
 });
 
 window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && state.healthLogModalOpen) {
+    closeHealthLogModal();
+    return;
+  }
+
   if (event.key === 'Escape' && state.postModalOpen) {
     closePostModal();
     return;

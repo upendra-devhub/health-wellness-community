@@ -19,6 +19,37 @@ const healthTrackerSchema = new Schema({
   steps: {
     type: Number,
     default: 0
+  },
+  running: {
+    type: Number,
+    default: 0
+  },
+  sleep: {
+    type: Number,
+    default: 0
+  },
+  dailyLogs: {
+    type: [
+      {
+        date: {
+          type: String,
+          required: true
+        },
+        walking: {
+          type: Number,
+          default: 0
+        },
+        running: {
+          type: Number,
+          default: 0
+        },
+        sleep: {
+          type: Number,
+          default: 0
+        }
+      }
+    ],
+    default: []
   }
 });
 

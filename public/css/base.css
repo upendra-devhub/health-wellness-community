@@ -31,6 +31,12 @@
   --focus-ring: rgba(30, 107, 126, 0.26);
   --danger: #c43a31;
   --success: #1f8c5c;
+  --activity-walking: #2f9f68;
+  --activity-running: #4f83f1;
+  --activity-sleep: #70d4c2;
+  --activity-walking-soft: rgba(47, 159, 104, 0.14);
+  --activity-running-soft: rgba(79, 131, 241, 0.14);
+  --activity-sleep-soft: rgba(112, 212, 194, 0.16);
   --shadow-soft: 0 18px 42px rgba(14, 24, 34, 0.08);
   --shadow-float: 0 28px 60px rgba(30, 107, 126, 0.18);
   --gradient-page:
@@ -103,6 +109,12 @@
   --focus-ring: rgba(143, 212, 234, 0.34);
   --danger: #ff9f96;
   --success: #7cd0a3;
+  --activity-walking: #66c891;
+  --activity-running: #7fa8ff;
+  --activity-sleep: #8be0d1;
+  --activity-walking-soft: rgba(102, 200, 145, 0.16);
+  --activity-running-soft: rgba(127, 168, 255, 0.16);
+  --activity-sleep-soft: rgba(139, 224, 209, 0.16);
   --shadow-soft: 0 18px 42px rgba(0, 0, 0, 0.28);
   --shadow-float: 0 28px 60px rgba(0, 0, 0, 0.36);
   --gradient-page:
@@ -1203,6 +1215,209 @@ a {
   gap: 14px;
 }
 
+.dashboard-chart {
+  min-height: 280px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.dashboard-chart__day {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 10px;
+  align-items: end;
+  color: var(--muted);
+}
+
+.dashboard-chart__day:hover,
+.dashboard-chart__day.is-selected {
+  color: var(--primary);
+}
+
+.dashboard-chart__track {
+  width: 100%;
+  height: 230px;
+  padding: 10px;
+  border-radius: 22px;
+  display: flex;
+  align-items: flex-end;
+  background: var(--surface-soft);
+  box-shadow: inset 0 0 0 1px var(--outline-soft);
+}
+
+.dashboard-chart__day.is-selected .dashboard-chart__track {
+  box-shadow:
+    inset 0 0 0 2px var(--primary),
+    var(--shadow-soft);
+}
+
+.dashboard-chart__stack {
+  width: 100%;
+  height: var(--bar-height);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  border-radius: 16px;
+  animation: growDashboardBar 620ms ease both;
+}
+
+.dashboard-chart__segment {
+  display: block;
+  width: 100%;
+}
+
+.dashboard-chart__segment--walking {
+  height: var(--walking-height);
+  background: var(--activity-walking);
+}
+
+.dashboard-chart__segment--running {
+  height: var(--running-height);
+  background: var(--activity-running);
+}
+
+.dashboard-chart__segment--sleep {
+  height: var(--sleep-height);
+  background: var(--activity-sleep);
+}
+
+.dashboard-chart__label {
+  min-height: 18px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dashboard-chart__tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  width: max-content;
+  max-width: 190px;
+  padding: 12px;
+  border-radius: 16px;
+  display: grid;
+  gap: 4px;
+  background: var(--surface-overlay-strong);
+  color: var(--text);
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 8px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  z-index: 2;
+}
+
+.dashboard-chart__tooltip span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.dashboard-chart__day:hover .dashboard-chart__tooltip,
+.dashboard-chart__day:focus-visible .dashboard-chart__tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.dashboard-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.dashboard-stat {
+  padding: 22px;
+  border-radius: 24px;
+  display: grid;
+  gap: 10px;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.dashboard-stat__label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dashboard-stat strong {
+  font-family: "Manrope", sans-serif;
+  font-size: 1.65rem;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-stat__comparison {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.dashboard-stat--walking {
+  background: linear-gradient(180deg, var(--activity-walking-soft), var(--surface-card) 54%);
+}
+
+.dashboard-stat--walking .dashboard-stat__label,
+.dashboard-stat--walking strong {
+  color: var(--activity-walking);
+}
+
+.dashboard-stat--running {
+  background: linear-gradient(180deg, var(--activity-running-soft), var(--surface-card) 54%);
+}
+
+.dashboard-stat--running .dashboard-stat__label,
+.dashboard-stat--running strong {
+  color: var(--activity-running);
+}
+
+.dashboard-stat--sleep {
+  background: linear-gradient(180deg, var(--activity-sleep-soft), var(--surface-card) 54%);
+}
+
+.dashboard-stat--sleep .dashboard-stat__label,
+.dashboard-stat--sleep strong {
+  color: var(--activity-sleep);
+}
+
+.dashboard-log-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.dashboard-log-card h2 {
+  margin-top: 12px;
+}
+
+.dashboard-log-summary {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-log-summary span {
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  color: var(--tertiary);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.dashboard-modal .composer-modal {
+  width: min(560px, 100%);
+}
+
 .metric-line,
 .progress-line {
   display: flex;
@@ -1580,6 +1795,17 @@ a {
   }
 }
 
+@keyframes growDashboardBar {
+  from {
+    transform: scaleY(0.04);
+    transform-origin: bottom;
+  }
+  to {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+}
+
 @media (max-width: 1279px) {
   .main-content {
     margin-right: 0;
@@ -1696,8 +1922,29 @@ a {
   .field-grid,
   .community-grid,
   .health-grid,
-  .profile-grid {
+  .profile-grid,
+  .dashboard-stat-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-chart {
+    min-height: 230px;
+    gap: 8px;
+  }
+
+  .dashboard-chart__track {
+    height: 180px;
+    padding: 8px;
+    border-radius: 18px;
+  }
+
+  .dashboard-chart__stack {
+    border-radius: 12px;
+  }
+
+  .dashboard-log-card {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .profile-menu__stats {
