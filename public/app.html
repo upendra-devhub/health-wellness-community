@@ -27,11 +27,8 @@
         id="create-post-trigger"
         class="icon-button topbar__create-button"
         type="button"
-        aria-label="Create post"
-        aria-haspopup="dialog"
-        aria-controls="post-modal"
-        data-action="open-post-modal">
-        <span class="material-symbols-outlined">add</span>
+        aria-label="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
       </button>
       <button id="theme-toggle-button" class="icon-button topbar__theme-button" type="button" aria-label="Switch to dark mode">
         <span id="theme-toggle-icon" class="material-symbols-outlined">dark_mode</span>
@@ -55,21 +52,25 @@
       </div>
 
       <nav class="sidebar-nav">
-        <button class="sidebar-nav__item" data-route="/">
+        <button class="sidebar-nav__item" data-action="open-first-community">
           <span class="material-symbols-outlined">explore</span>
           <span>Discover</span>
         </button>
         <button class="sidebar-nav__item" data-route="/profile">
-          <span class="material-symbols-outlined">person</span>
-          <span>Your Profile</span>
+          <span class="material-symbols-outlined">group</span>
+          <span>My Communities</span>
         </button>
-        <button class="sidebar-nav__item" data-route="/health">
-          <span class="material-symbols-outlined">menu_book</span>
-          <span>Health Journal</span>
+        <button class="sidebar-nav__item" data-route="/">
+          <span class="material-symbols-outlined">grid_view</span>
+          <span>Dashboard</span>
         </button>
         <button class="sidebar-nav__item" data-action="open-first-community">
           <span class="material-symbols-outlined">verified</span>
           <span>Community Spotlight</span>
+        </button>
+        <button class="sidebar-nav__item" data-route="/health">
+          <span class="material-symbols-outlined">menu_book</span>
+          <span>Health Journal</span>
         </button>
       </nav>
 
@@ -103,8 +104,8 @@
 
   <nav class="mobile-nav">
     <button type="button" class="mobile-nav__item" data-route="/">
-      <span class="material-symbols-outlined">home</span>
-      <span>Home</span>
+      <span class="material-symbols-outlined">grid_view</span>
+      <span>Dashboard</span>
     </button>
     <button type="button" class="mobile-nav__item" data-action="open-first-community">
       <span class="material-symbols-outlined">groups</span>
