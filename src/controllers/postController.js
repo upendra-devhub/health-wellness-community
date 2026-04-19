@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 
 const Community = require('../models/Community');
 const Post = require('../models/Post');
@@ -14,6 +15,8 @@ const {
   ensureString,
   parseTags
 } = require('../utils/validation');
+
+const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
 
 function buildCommunityFilter(communityValue) {
   return {
@@ -43,6 +46,14 @@ async function removeUploadedFile(filePath) {
   } catch (_error) {
     // Ignore cleanup failures for already-removed temp files.
   }
+}
+
+function getUploadedImagePath(imagePath) {
+  if (!imagePath || !String(imagePath).startsWith('/uploads/')) {
+    return '';
+  }
+
+  return path.join(uploadsDir, path.basename(imagePath));
 }
 
 const getPosts = asyncHandler(async (req, res) => {
@@ -211,9 +222,58 @@ const addComment = asyncHandler(async (req, res) => {
   });
 });
 
+const deletePost = asyncHandler(async (req, res) => {
+  const postId = ensureObjectId(req.params.id, 'Post id');
+  const post = await Post.findById(postId).select('user createdBy community communityId image photo');
+
+  if (!post) {
+    throw new AppError('Post not found.', 404);
+  }
+
+  const ownerId = post.user || post.createdBy;
+
+  if (!ownerId || ownerId.toString() !== req.user._id.toString()) {
+    throw new AppError('You can delete only your own posts.', 403);
+  }
+
+  const communityIds = [post.community, post.communityId].filter(Boolean);
+
+  await Promise.all([
+    Post.deleteOne({ _id: post._id }),
+    User.updateMany(
+      {
+        $or: [
+          { posts: post._id },
+          { likedPosts: post._id }
+        ]
+      },
+      {
+        $pull: {
+          posts: post._id,
+          likedPosts: post._id
+        }
+      }
+    ),
+    communityIds.length
+      ? Community.updateMany(
+          { _id: { $in: communityIds } },
+          { $pull: { posts: post._id } }
+        )
+      : Promise.resolve()
+  ]);
+
+  await removeUploadedFile(getUploadedImagePath(post.image || post.photo));
+
+  res.json({
+    message: 'Post deleted.',
+    postId: post._id
+  });
+});
+
 module.exports = {
   getPosts,
   createPost,
+  deletePost,
   getPostById,
   likePost,
   addComment

@@ -12,6 +12,7 @@
 </head>
 <body class="app-shell-body">
   <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+  <div id="onboarding-root"></div>
 
   <header class="topbar">
     <div class="topbar__brand-group">
@@ -106,9 +107,9 @@
       <span class="material-symbols-outlined">home</span>
       <span>Home</span>
     </button>
-    <button type="button" class="mobile-nav__item" data-action="open-first-community">
-      <span class="material-symbols-outlined">groups</span>
-      <span>Circles</span>
+    <button type="button" class="mobile-nav__item" data-route="/health">
+      <span class="material-symbols-outlined">monitoring</span>
+      <span>Health</span>
     </button>
     <button
       type="button"
@@ -119,9 +120,9 @@
       aria-controls="post-modal">
       <span class="material-symbols-outlined">add</span>
     </button>
-    <button type="button" class="mobile-nav__item" data-route="/health">
-      <span class="material-symbols-outlined">menu_book</span>
-      <span>Dashboard</span>
+    <button type="button" class="mobile-nav__item" data-action="open-first-community">
+      <span class="material-symbols-outlined">groups</span>
+      <span>Circle</span>
     </button>
     <button type="button" class="mobile-nav__item" data-route="/profile">
       <span class="material-symbols-outlined">person</span>

@@ -24,8 +24,14 @@ const getProfile = asyncHandler(async (req, res) => {
       ]
     }).sort({ createdAt: -1 })
   );
+  const rawLikedPosts = user.likedPosts?.length
+    ? await buildPostQuery(
+        Post.find({ _id: { $in: user.likedPosts } }).sort({ createdAt: -1 })
+      )
+    : [];
 
   const posts = await decoratePostsForUser(rawPosts, req.user._id);
+  const likedPosts = await decoratePostsForUser(rawLikedPosts, req.user._id);
 
   const commentsCount = posts.reduce((total, post) => total + post.comments.length, 0);
   const likesCount = posts.reduce((total, post) => total + post.likes, 0);
@@ -33,6 +39,7 @@ const getProfile = asyncHandler(async (req, res) => {
   res.json({
     user,
     posts,
+    likedPosts,
     stats: {
       postsCount: posts.length,
       communitiesCount: user.communitiesJoined.length,

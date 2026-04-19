@@ -97,8 +97,49 @@ const joinCommunity = asyncHandler(async (req, res) => {
   });
 });
 
+const leaveCommunity = asyncHandler(async (req, res) => {
+  const communityId = ensureObjectId(req.params.id, 'Community id');
+
+  const [community, user] = await Promise.all([
+    Community.findById(communityId),
+    User.findById(req.user._id)
+  ]);
+
+  if (!community) {
+    throw new AppError('Community not found.', 404);
+  }
+
+  if (!user) {
+    throw new AppError('User not found.', 404);
+  }
+
+  const wasJoined = user.communitiesJoined.some(
+    (joinedId) => joinedId.toString() === community._id.toString()
+  );
+
+  if (!wasJoined) {
+    throw new AppError('You are not part of this community.', 400);
+  }
+
+  user.communitiesJoined = user.communitiesJoined.filter(
+    (joinedId) => joinedId.toString() !== community._id.toString()
+  );
+  community.noOfActiveMembers = Math.max(0, (community.noOfActiveMembers || 0) - 1);
+
+  await Promise.all([user.save(), community.save()]);
+
+  res.json({
+    message: 'Community left successfully.',
+    community: {
+      ...community.toObject(),
+      isJoined: false
+    }
+  });
+});
+
 module.exports = {
   getCommunities,
   getCommunityById,
-  joinCommunity
+  joinCommunity,
+  leaveCommunity
 };

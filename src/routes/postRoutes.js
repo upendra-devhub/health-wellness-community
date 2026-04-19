@@ -3,6 +3,7 @@ const express = require('express');
 const {
   addComment,
   createPost,
+  deletePost,
   getPostById,
   getPosts,
   likePost
@@ -21,6 +22,7 @@ router.post(
   createPost
 );
 router.get('/:id', getPostById);
+router.delete('/:id', deletePost);
 router.post('/:id/like', likePost);
 router.post('/:id/comment', addComment);
 

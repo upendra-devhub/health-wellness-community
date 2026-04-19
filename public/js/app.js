@@ -12,10 +12,11 @@ import { createPostLikeManager } from './postLikeManager.js';
 
 const MAX_POST_IMAGE_BYTES = 512 * 1024;
 const THEME_STORAGE_KEY = 'soft-health-theme';
+const SAVED_POSTS_STORAGE_KEY = 'soft-health-saved-posts';
 const PROFILE_TABS = [
-  { id: 'all', label: 'All Posts' },
-  { id: 'top', label: 'Top Posts' },
-  { id: 'new', label: 'New Posts' }
+  { id: 'posts', label: 'Your Posts' },
+  { id: 'liked', label: 'Liked Posts' },
+  { id: 'saved', label: 'Saved Posts' }
 ];
 const ACTIVITY_TARGETS = {
   walking: 10000,
@@ -27,10 +28,13 @@ const ACTIVITY_METRICS = [
   { key: 'running', label: 'Running', unit: 'km', colorClass: 'dashboard-stat--running' },
   { key: 'sleep', label: 'Sleep', unit: 'hours', colorClass: 'dashboard-stat--sleep' }
 ];
+const MIN_ONBOARDING_COMMUNITIES = 3;
 
 const state = {
   profile: null,
   profilePosts: [],
+  likedPosts: [],
+  savedPosts: [],
   profileStats: {
     postsCount: 0,
     communitiesCount: 0,
@@ -54,7 +58,11 @@ const state = {
   shellHydrated: false,
   search: '',
   feedFilter: 'all',
-  profileTab: 'all',
+  profileTab: 'posts',
+  openCommentPostIds: new Set(),
+  savedPostIds: new Set(),
+  onboardingSelectedCommunityIds: new Set(),
+  onboardingSubmitting: false,
   theme: 'light'
 };
 
@@ -62,6 +70,7 @@ const likeManager = createPostLikeManager();
 
 const elements = {
   viewRoot: document.getElementById('view-root'),
+  onboardingRoot: document.getElementById('onboarding-root'),
   searchInput: document.getElementById('global-search'),
   joinedCommunitiesList: document.getElementById('joined-communities-list'),
   healthSidebar: document.getElementById('health-sidebar'),
@@ -132,6 +141,25 @@ function persistTheme(theme) {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch (_error) {
     // Ignore storage failures and keep the active in-memory theme.
+  }
+}
+
+function getStoredSavedPostIds() {
+  try {
+    const rawValue = localStorage.getItem(SAVED_POSTS_STORAGE_KEY);
+    const parsedValue = rawValue ? JSON.parse(rawValue) : [];
+
+    return Array.isArray(parsedValue) ? parsedValue.map(String) : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function persistSavedPostIds() {
+  try {
+    localStorage.setItem(SAVED_POSTS_STORAGE_KEY, JSON.stringify([...state.savedPostIds]));
+  } catch (_error) {
+    // Saved posts are a convenience; ignore storage failures.
   }
 }
 
@@ -253,6 +281,29 @@ function getPostBody(post) {
 
 function getPostImage(post) {
   return post?.image || post?.photo || '';
+}
+
+function getPostImageUrl(post) {
+  const image = getPostImage(post);
+
+  if (!image) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(image) || image.startsWith('data:')) {
+    return image;
+  }
+
+  if (image.startsWith('/')) {
+    return `${window.location.origin}${image}`;
+  }
+
+  return `${window.location.origin}/${image.replace(/^\.?\//, '')}`;
+}
+
+function isCurrentUserPostOwner(post) {
+  const authorId = getPostAuthor(post)?._id;
+  return Boolean(authorId && state.profile?._id && String(authorId) === String(state.profile._id));
 }
 
 function setInlineMessage(element, text, type = 'error') {
@@ -437,6 +488,96 @@ function getTrendingCommunities() {
     .slice(0, 3);
 }
 
+function getJoinedCommunityCount() {
+  return getJoinedCommunities().length;
+}
+
+function needsOnboarding() {
+  return state.shellHydrated && getJoinedCommunityCount() < MIN_ONBOARDING_COMMUNITIES;
+}
+
+function getOnboardingSelectedCount() {
+  return state.onboardingSelectedCommunityIds.size;
+}
+
+function getOnboardingTotalCount() {
+  return getJoinedCommunityCount() + getOnboardingSelectedCount();
+}
+
+function renderOnboardingGate() {
+  elements.viewRoot.innerHTML = `
+    <section class="empty-state empty-state--feed">
+      <h2>Choose your communities</h2>
+      <p>Join at least ${MIN_ONBOARDING_COMMUNITIES} communities to personalize your feed and unlock posts that match your wellness goals.</p>
+    </section>
+  `;
+}
+
+function renderOnboardingModal() {
+  if (!elements.onboardingRoot) {
+    return;
+  }
+
+  if (!needsOnboarding()) {
+    elements.onboardingRoot.innerHTML = '';
+    return;
+  }
+
+  const joinedIds = new Set(getJoinedCommunities().map((community) => community._id));
+  const availableCommunities = state.communities.filter((community) => !joinedIds.has(community._id));
+  const totalCount = getOnboardingTotalCount();
+  const canContinue = totalCount >= MIN_ONBOARDING_COMMUNITIES && !state.onboardingSubmitting;
+  const remainingCount = Math.max(0, MIN_ONBOARDING_COMMUNITIES - totalCount);
+
+  elements.onboardingRoot.innerHTML = `
+    <div class="modal-shell onboarding-modal is-open" aria-hidden="false">
+      <div class="modal-shell__backdrop"></div>
+
+      <div class="composer-card composer-modal onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-subtitle">
+        <div class="composer-modal__header">
+          <div class="composer-modal__heading">
+            <h2 id="onboarding-title">Choose your communities</h2>
+            <p id="onboarding-subtitle" class="muted-copy">Join at least ${MIN_ONBOARDING_COMMUNITIES} to personalize your feed</p>
+          </div>
+          <span class="community-badge">${totalCount}/${MIN_ONBOARDING_COMMUNITIES} selected</span>
+        </div>
+
+        <div class="onboarding-grid" role="listbox" aria-label="Available communities" aria-multiselectable="true">
+          ${availableCommunities.map((community) => {
+            const isSelected = state.onboardingSelectedCommunityIds.has(community._id);
+
+            return `
+              <button
+                class="onboarding-choice ${isSelected ? 'is-selected' : ''}"
+                type="button"
+                role="option"
+                aria-selected="${String(isSelected)}"
+                data-action="toggle-onboarding-community"
+                data-community-id="${community._id}">
+                <span class="accent-tile" style="${getAccentVars(community.communityName)}">${escapeHtml(community.communityName.charAt(0))}</span>
+                <span class="onboarding-choice__copy">
+                  <strong>${escapeHtml(community.communityName)}</strong>
+                  <span>${escapeHtml(community.description)}</span>
+                </span>
+                <span class="material-symbols-outlined">${isSelected ? 'check_circle' : 'add_circle'}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+
+        <div class="composer-actions composer-actions--modal">
+          <span class="helper-text">
+            ${remainingCount ? `Select ${remainingCount} more ${remainingCount === 1 ? 'community' : 'communities'} to continue.` : 'Ready to build your personalized feed.'}
+          </span>
+          <button class="button-primary" type="button" data-action="submit-onboarding" ${canContinue ? '' : 'disabled'}>
+            ${state.onboardingSubmitting ? 'Joining...' : 'Continue'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function getPostCollections() {
   return [state.homePosts, state.profilePosts, state.communityPosts];
 }
@@ -473,6 +614,21 @@ function getLocalPostSnapshot(postId) {
     likesCount: 0,
     authorId: null
   };
+}
+
+function getLocalPost(postId) {
+  const normalizedPostId = String(postId);
+  const collections = [...getPostCollections(), state.likedPosts, state.savedPosts];
+
+  for (const posts of collections) {
+    const post = posts.find((item) => item?._id === normalizedPostId);
+
+    if (post) {
+      return post;
+    }
+  }
+
+  return state.currentPost?._id === normalizedPostId ? state.currentPost : null;
 }
 
 function updateProfileLikesSummary(delta) {
@@ -536,7 +692,38 @@ function applyLikeStateToLocalPosts(postId, liked, likesCount) {
     updateProfileLikesSummary(likesCount - previousLikesCount);
   }
 
+  const likedPost = getLocalPost(postId);
+  if (liked && likedPost) {
+    prependUniquePost(state.likedPosts, likedPost);
+  } else if (!liked) {
+    state.likedPosts = state.likedPosts.filter((post) => post?._id !== String(postId));
+  }
+
   syncLikeButtons(postId);
+}
+
+function toggleSavedPost(postId) {
+  const normalizedPostId = String(postId);
+
+  if (state.savedPostIds.has(normalizedPostId)) {
+    state.savedPostIds.delete(normalizedPostId);
+    state.savedPosts = state.savedPosts.filter((post) => post?._id !== normalizedPostId);
+    persistSavedPostIds();
+    renderCurrentView();
+    showToast('Post removed from saved.');
+    return;
+  }
+
+  const post = getLocalPost(normalizedPostId);
+  state.savedPostIds.add(normalizedPostId);
+
+  if (post) {
+    prependUniquePost(state.savedPosts, post);
+  }
+
+  persistSavedPostIds();
+  renderCurrentView();
+  showToast('Post saved.');
 }
 
 function renderEmptyState(title, copy = '', options = {}) {
@@ -556,22 +743,20 @@ function getProfilePostsByTab() {
     ? state.profilePosts.filter((post) => matchesSearch(post, state.search))
     : [...state.profilePosts];
 
-  if (state.profileTab === 'top') {
-    return searchedPosts.sort((leftPost, rightPost) => {
-      const likesDelta = (rightPost.likes || 0) - (leftPost.likes || 0);
-      if (likesDelta) {
-        return likesDelta;
-      }
+  if (state.profileTab === 'liked') {
+    const likedPosts = state.search
+      ? state.likedPosts.filter((post) => matchesSearch(post, state.search))
+      : [...state.likedPosts];
 
-      return (rightPost.comments?.length || 0) - (leftPost.comments?.length || 0);
-    });
+    return likedPosts;
   }
 
-  if (state.profileTab === 'new') {
-    return searchedPosts.sort((leftPost, rightPost) => {
-      return new Date(rightPost.createdAt || rightPost.updatedAt || 0).getTime()
-        - new Date(leftPost.createdAt || leftPost.updatedAt || 0).getTime();
-    });
+  if (state.profileTab === 'saved') {
+    const savedPosts = state.savedPosts.filter((post) => state.savedPostIds.has(String(post._id)));
+
+    return state.search
+      ? savedPosts.filter((post) => matchesSearch(post, state.search))
+      : [...savedPosts];
   }
 
   return searchedPosts;
@@ -630,8 +815,13 @@ function renderSidebar() {
   elements.joinedCommunitiesList.innerHTML = joinedCommunities.length
     ? joinedCommunities.map((community) => `
         <li>
-          <span class="circle-dot" style="${getAccentVars(community.communityName)}"></span>
-          <button type="button" data-route="/community/${community._id}">${escapeHtml(community.communityName)}</button>
+          <div class="circle-list__main">
+            <span class="circle-dot" style="${getAccentVars(community.communityName)}"></span>
+            <button type="button" data-route="/community/${community._id}">${escapeHtml(community.communityName)}</button>
+          </div>
+          <button class="circle-list__leave" type="button" data-action="leave-community" data-community-id="${community._id}" aria-label="Leave ${escapeHtml(community.communityName)}">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </li>
       `).join('')
     : '<li><span class="muted-copy">No circles joined yet.</span></li>';
@@ -772,47 +962,115 @@ function syncCreatedPost(post) {
   state.profileStats.postsCount += 1;
 }
 
+function syncUpdatedPost(updatedPost) {
+  if (!updatedPost?._id) {
+    return;
+  }
+
+  let previousCommentsCount = null;
+  let affectsCurrentUsersPost = false;
+
+  visitLocalPost(updatedPost._id, (post) => {
+    if (previousCommentsCount === null) {
+      previousCommentsCount = post.comments?.length || 0;
+      affectsCurrentUsersPost = isCurrentUserPostOwner(post);
+    }
+
+    Object.assign(post, updatedPost);
+  });
+
+  if (state.currentPost?._id === updatedPost._id) {
+    if (previousCommentsCount === null) {
+      previousCommentsCount = state.currentPost.comments?.length || 0;
+      affectsCurrentUsersPost = isCurrentUserPostOwner(state.currentPost);
+    }
+
+    state.currentPost = updatedPost;
+  }
+
+  if (previousCommentsCount !== null && affectsCurrentUsersPost) {
+    state.profileStats.commentsCount = Math.max(
+      0,
+      (state.profileStats.commentsCount || 0) + ((updatedPost.comments?.length || 0) - previousCommentsCount)
+    );
+  }
+}
+
+function renderCommentPanel(post, isOpen) {
+  if (!isOpen) {
+    return '';
+  }
+
+  const comments = post.comments || [];
+  const postId = String(post._id);
+
+  return `
+    <div class="comment-panel" id="comments-${postId}">
+      <form class="comment-form" data-comment-form data-post-id="${postId}">
+        <label class="field comment-field">
+          <span>Add a comment</span>
+          <textarea name="description" rows="2" placeholder="Share an encouraging reply..." required></textarea>
+        </label>
+        <button class="button-primary" type="submit">Post comment</button>
+      </form>
+
+      <div class="comment-list">
+        ${comments.length ? comments.map((comment) => `
+          <article class="surface-panel comment-surface">
+            <div class="comment-pill">
+              ${renderAvatar(comment.userId || { name: 'Member' }, 'small')}
+              <div class="comment-bubble">
+                <strong>${escapeHtml(comment.userId?.name || 'Community Member')}</strong>
+                <span>${escapeHtml(comment.description)}</span>
+              </div>
+            </div>
+          </article>
+        `).join('') : `
+          <section class="empty-state empty-state--comments">
+            <h3>No comments yet</h3>
+            <p>Start the conversation with a supportive response.</p>
+          </section>
+        `}
+      </div>
+    </div>
+  `;
+}
+
 function renderPostCard(post, options = {}) {
   const author = getPostAuthor(post);
   const community = getPostCommunity(post);
   const title = getPostTitle(post);
   const body = getPostBody(post);
-  const image = getPostImage(post);
+  const image = getPostImageUrl(post);
   const isLiked = likeManager.isLiked(post._id);
-  const showCommentPreview = options.showCommentPreview !== false;
-  const commentPreview = showCommentPreview && post.comments?.length
-    ? `
-      <div class="comment-preview">
-        ${post.comments.slice(0, 1).map((comment) => `
-          <div class="comment-pill">
-            ${renderAvatar(comment.userId || { name: 'Member' }, 'small')}
-            <div class="comment-bubble">
-              <strong>${escapeHtml(comment.userId?.name || 'Community Member')}</strong>
-              <span>${escapeHtml(comment.description)}</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `
-    : '';
+  const postId = String(post._id);
+  const isCommentsOpen = state.openCommentPostIds.has(postId);
+  const isSaved = state.savedPostIds.has(postId);
+  const canDelete = isCurrentUserPostOwner(post);
 
   return `
     <article class="post-card">
       <div class="post-card__body">
         <div class="post-card__header">
           <div class="post-card__meta">
-            ${renderAvatar(author || { name: 'User' })}
             <div class="meta-copy">
-              <h3>${escapeHtml(author?.name || 'Anonymous')}</h3>
+              <h3>${community ? escapeHtml(community.communityName) : 'Community'}</h3>
               <p class="meta-line">
                 ${escapeHtml(formatRelativeTime(post.updatedAt || post.createdAt))}
-                ${community ? `&bull; <strong>${escapeHtml(community.communityName)}</strong>` : ''}
+                ${author ? `&bull; ${escapeHtml(author.username ? `@${author.username}` : author.name || 'Member')}` : ''}
               </p>
             </div>
           </div>
-          <button class="icon-ghost" type="button" data-route="/post/${post._id}" aria-label="Open post">
-            <span class="material-symbols-outlined">more_horiz</span>
-          </button>
+          <div class="post-card__header-actions">
+            ${canDelete ? `
+              <button class="icon-ghost icon-ghost--danger" type="button" data-action="delete-post" data-post-id="${postId}" aria-label="Delete post">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            ` : ''}
+            <button class="icon-ghost" type="button" data-route="/post/${postId}" aria-label="Open post">
+              <span class="material-symbols-outlined">more_horiz</span>
+            </button>
+          </div>
         </div>
 
         <div class="post-card__content">
@@ -827,30 +1085,30 @@ function renderPostCard(post, options = {}) {
             `).join('')}
           </div>
         ` : ''}
-      </div>
 
-      ${image ? `<img class="post-card__image" src="${escapeHtml(image)}" alt="${escapeHtml(title || body || 'Post image')}">` : ''}
+        ${image ? `<img class="post-card__image" src="${escapeHtml(image)}" alt="${escapeHtml(title || body || 'Post image')}" loading="lazy">` : ''}
+      </div>
 
       <div class="post-card__footer">
         <div class="post-card__actions">
-          <button class="post-action ${isLiked ? 'is-active' : ''}" type="button" data-action="like-post" data-post-id="${post._id}" aria-pressed="${String(isLiked)}">
+          <button class="post-action ${isLiked ? 'is-active' : ''}" type="button" data-action="like-post" data-post-id="${postId}" aria-pressed="${String(isLiked)}">
             <span class="material-symbols-outlined"${isLiked ? ' style="font-variation-settings: \'FILL\' 1, \'wght\' 400, \'GRAD\' 0, \'opsz\' 24;"' : ''}>favorite</span>
             <span data-like-count>${formatCompactNumber(post.likes || 0)}</span>
           </button>
-          <button class="post-action" type="button" data-route="/post/${post._id}">
+          <button class="post-action ${isCommentsOpen ? 'is-active' : ''}" type="button" data-action="toggle-comments" data-post-id="${postId}" aria-expanded="${String(isCommentsOpen)}" aria-controls="comments-${postId}">
             <span class="material-symbols-outlined">chat_bubble</span>
             <span>${formatCompactNumber(post.comments?.length || 0)}</span>
           </button>
-          <button class="post-action" type="button" data-action="share-post" data-post-id="${post._id}">
+          <button class="post-action" type="button" data-action="share-post" data-post-id="${postId}">
             <span class="material-symbols-outlined">share</span>
           </button>
         </div>
-        <button class="post-action" type="button" data-route="/post/${post._id}">
+        <button class="post-action ${isSaved ? 'is-active' : ''}" type="button" data-action="toggle-save-post" data-post-id="${postId}" aria-pressed="${String(isSaved)}">
           <span class="material-symbols-outlined">bookmark</span>
         </button>
       </div>
 
-      ${commentPreview}
+      ${renderCommentPanel(post, isCommentsOpen)}
     </article>
   `;
 }
@@ -860,7 +1118,7 @@ function renderPostFeed(posts, emptyTitle, emptyCopy, options = {}) {
     return renderEmptyState(emptyTitle, emptyCopy, options);
   }
 
-  return `<div class="feed-stack">${posts.map((post) => renderPostCard(post)).join('')}</div>`;
+  return `<div class="feed-stack">${posts.map((post) => renderPostCard(post, options)).join('')}</div>`;
 }
 
 function renderCommunitySuggestions() {
@@ -933,6 +1191,11 @@ function renderProfileView() {
   const activeTab = PROFILE_TABS.find((tab) => tab.id === state.profileTab);
   const profileName = state.profile?.name || 'Soft Health Member';
   const profileUsername = state.profile?.username || 'member';
+  const emptyTitle = state.profileTab === 'liked'
+    ? "You haven't liked any of your visible posts yet"
+    : state.profileTab === 'saved'
+      ? 'No saved posts yet'
+      : "You haven't posted anything yet";
 
   elements.viewRoot.innerHTML = `
     <section class="profile-hero">
@@ -954,10 +1217,6 @@ function renderProfileView() {
 
     <section class="detail-card">
       <div class="detail-card__header detail-card__header--stacked">
-        <div>
-          <h2>Your posts</h2>
-          <p class="muted-copy">Browse everything you have shared in the community, sorted the way you prefer.</p>
-        </div>
         ${renderProfileTabs()}
       </div>
       <p class="micro-copy">Showing ${escapeHtml(activeTab?.label || 'All Posts')}</p>
@@ -966,7 +1225,7 @@ function renderProfileView() {
     <section class="profile-grid">
       ${renderPostFeed(
         profilePosts,
-        "You haven't posted anything yet",
+        emptyTitle,
         '',
         { tone: 'profile' }
       )}
@@ -997,8 +1256,8 @@ function renderCommunityView() {
             <p>${escapeHtml(community.description)}</p>
           </div>
         </div>
-        <button class="${community.isJoined ? 'soft-button' : 'button-primary'}" type="button" data-action="join-community" data-community-id="${community._id}" ${community.isJoined ? 'disabled' : ''}>
-          ${community.isJoined ? 'Joined' : 'Join community'}
+        <button class="${community.isJoined ? 'soft-button' : 'button-primary'}" type="button" data-action="${community.isJoined ? 'leave-community' : 'join-community'}" data-community-id="${community._id}">
+          ${community.isJoined ? 'Leave community' : 'Join community'}
         </button>
       </div>
 
@@ -1033,43 +1292,7 @@ function renderPostDetailView() {
         <button class="soft-button" type="button" data-route="${post.communityId ? `/community/${post.communityId._id}` : '/'}">Back</button>
       </div>
 
-      ${renderPostCard(post, { showCommentPreview: false })}
-    </section>
-
-    <section class="detail-card">
-      <div class="detail-card__header">
-        <div>
-          <h2>Comments</h2>
-          <p class="muted-copy">Every reply is stored inside the post document exactly as the provided schema expects.</p>
-        </div>
-      </div>
-
-      <form id="comment-form" class="stack-form" data-post-id="${post._id}">
-        <label class="field">
-          <span>Add a comment</span>
-          <textarea name="description" rows="4" placeholder="Share an encouraging reply..." required></textarea>
-        </label>
-        <button class="button-primary" type="submit">Post comment</button>
-      </form>
-
-      <div class="feed-stack">
-        ${post.comments?.length ? post.comments.map((comment) => `
-          <article class="surface-panel">
-            <div class="comment-pill">
-              ${renderAvatar(comment.userId || { name: 'Member' }, 'small')}
-              <div class="comment-bubble">
-                <strong>${escapeHtml(comment.userId?.name || 'Community Member')}</strong>
-                <span>${escapeHtml(comment.description)}</span>
-              </div>
-            </div>
-          </article>
-        `).join('') : `
-          <section class="empty-state">
-            <h3>No comments yet</h3>
-            <p>Start the conversation with a supportive response.</p>
-          </section>
-        `}
-      </div>
+      ${renderPostCard(post)}
     </section>
   `;
 }
@@ -1396,16 +1619,46 @@ async function loadShellData(options = {}) {
 
   state.profile = profileData.user;
   state.profilePosts = profileData.posts;
+  state.likedPosts = profileData.likedPosts || [];
   state.profileStats = profileData.stats;
   state.communities = communitiesData.communities;
   state.health = healthData.health;
   likeManager.replaceLikedPosts(profileData.user?.likedPosts || []);
+  state.savedPostIds = new Set(getStoredSavedPostIds());
+
+  if (state.savedPostIds.size) {
+    const savedPostResults = await Promise.allSettled(
+      [...state.savedPostIds].map((postId) => apiFetch(`/api/posts/${postId}`))
+    );
+
+    state.savedPosts = savedPostResults
+      .filter((result) => result.status === 'fulfilled' && result.value?.post)
+      .map((result) => result.value.post);
+
+    const validSavedPostIds = new Set(state.savedPosts.map((post) => String(post._id)));
+    state.savedPostIds.forEach((postId) => {
+      if (!validSavedPostIds.has(postId)) {
+        state.savedPostIds.delete(postId);
+      }
+    });
+    persistSavedPostIds();
+  } else {
+    state.savedPosts = [];
+  }
+
   state.shellHydrated = true;
 
   const validCommunityIds = new Set(getJoinedCommunities().map((community) => community._id));
   if (state.feedFilter !== 'all' && !validCommunityIds.has(state.feedFilter)) {
     state.feedFilter = 'all';
   }
+
+  const allCommunityIds = new Set(state.communities.map((community) => community._id));
+  state.onboardingSelectedCommunityIds.forEach((communityId) => {
+    if (validCommunityIds.has(communityId) || !allCommunityIds.has(communityId)) {
+      state.onboardingSelectedCommunityIds.delete(communityId);
+    }
+  });
 }
 
 async function loadViewData() {
@@ -1451,10 +1704,20 @@ async function refreshView(options = {}) {
 
   try {
     await loadShellData({ force: options.refreshShell });
+
+    if (needsOnboarding()) {
+      renderSidebar();
+      renderOnboardingGate();
+      renderOnboardingModal();
+      return;
+    }
+
     await loadViewData();
     renderSidebar();
     renderCurrentView();
+    renderOnboardingModal();
   } catch (error) {
+    renderOnboardingModal();
     renderErrorState(error.message);
   }
 }
@@ -1494,6 +1757,93 @@ async function handleJoinCommunity(communityId) {
     await refreshView({ skipLoading: true, refreshShell: true });
   } catch (error) {
     showToast(error.message, 'error');
+  }
+}
+
+function applyCommunityLeaveToLocalState(communityId) {
+  const normalizedCommunityId = String(communityId);
+  const community = state.communities.find((item) => item._id === normalizedCommunityId);
+
+  if (community) {
+    community.isJoined = false;
+    community.noOfActiveMembers = Math.max(0, (community.noOfActiveMembers || 0) - 1);
+  }
+
+  if (state.profile?.communitiesJoined) {
+    state.profile.communitiesJoined = state.profile.communitiesJoined.filter(
+      (joinedCommunity) => joinedCommunity._id !== normalizedCommunityId
+    );
+  }
+
+  state.profileStats.communitiesCount = Math.max(0, (state.profileStats.communitiesCount || 0) - 1);
+  state.homePosts = state.homePosts.filter((post) => getPostCommunity(post)?._id !== normalizedCommunityId);
+
+  if (state.currentCommunity?._id === normalizedCommunityId) {
+    state.currentCommunity = {
+      ...state.currentCommunity,
+      isJoined: false,
+      noOfActiveMembers: Math.max(0, (state.currentCommunity.noOfActiveMembers || 0) - 1)
+    };
+  }
+
+  if (state.feedFilter === normalizedCommunityId) {
+    state.feedFilter = 'all';
+  }
+}
+
+async function handleLeaveCommunity(communityId) {
+  const confirmed = window.confirm('Leave this community? Its posts will be removed from your feed.');
+
+  if (!confirmed) {
+    return;
+  }
+
+  applyCommunityLeaveToLocalState(communityId);
+  renderSidebar();
+  renderCurrentView();
+  renderOnboardingModal();
+
+  try {
+    await apiFetch(`/api/communities/${communityId}/join`, {
+      method: 'DELETE'
+    });
+
+    showToast('Community left.');
+    await refreshView({ skipLoading: true, refreshShell: true });
+  } catch (error) {
+    showToast(error.message, 'error');
+    await refreshView({ skipLoading: true, refreshShell: true });
+  }
+}
+
+async function handleOnboardingSubmit() {
+  if (state.onboardingSubmitting) {
+    return;
+  }
+
+  if (getOnboardingTotalCount() < MIN_ONBOARDING_COMMUNITIES) {
+    showToast(`Choose at least ${MIN_ONBOARDING_COMMUNITIES} communities to continue.`, 'error');
+    return;
+  }
+
+  const selectedCommunityIds = [...state.onboardingSelectedCommunityIds];
+  state.onboardingSubmitting = true;
+  renderOnboardingModal();
+
+  try {
+    await Promise.all(selectedCommunityIds.map((communityId) => apiFetch(`/api/communities/${communityId}/join`, {
+      method: 'POST'
+    })));
+
+    state.onboardingSelectedCommunityIds.clear();
+    showToast('Your feed is ready.');
+    await refreshView({ skipLoading: true, refreshShell: true });
+  } catch (error) {
+    showToast(error.message, 'error');
+    await refreshView({ skipLoading: true, refreshShell: true });
+  } finally {
+    state.onboardingSubmitting = false;
+    renderOnboardingModal();
   }
 }
 
@@ -1601,21 +1951,90 @@ async function handleComment(form) {
   try {
     const formData = new FormData(form);
 
-    await apiFetch(`/api/posts/${postId}/comment`, {
+    const response = await apiFetch(`/api/posts/${postId}/comment`, {
       method: 'POST',
       body: JSON.stringify({
         description: formData.get('description')
       })
     });
 
+    syncUpdatedPost(response.post);
+    state.openCommentPostIds.add(postId);
     showToast('Comment added.');
     form.reset();
-    await refreshView({ skipLoading: true });
+    renderSidebar();
+    renderCurrentView();
   } catch (error) {
     showToast(error.message, 'error');
   } finally {
     submitButton.disabled = false;
     submitButton.textContent = 'Post comment';
+  }
+}
+
+function removePostFromLocalState(postId) {
+  const normalizedPostId = String(postId);
+  const localPost = getPostCollections()
+    .flat()
+    .find((post) => post?._id === normalizedPostId)
+    || (state.currentPost?._id === normalizedPostId ? state.currentPost : null);
+
+  state.homePosts = state.homePosts.filter((post) => post?._id !== normalizedPostId);
+  state.profilePosts = state.profilePosts.filter((post) => post?._id !== normalizedPostId);
+  state.likedPosts = state.likedPosts.filter((post) => post?._id !== normalizedPostId);
+  state.savedPosts = state.savedPosts.filter((post) => post?._id !== normalizedPostId);
+  state.communityPosts = state.communityPosts.filter((post) => post?._id !== normalizedPostId);
+  state.savedPostIds.delete(normalizedPostId);
+  persistSavedPostIds();
+  state.openCommentPostIds.delete(normalizedPostId);
+
+  if (state.currentPost?._id === normalizedPostId) {
+    state.currentPost = null;
+  }
+
+  if (localPost && isCurrentUserPostOwner(localPost)) {
+    state.profileStats.postsCount = Math.max(0, (state.profileStats.postsCount || 0) - 1);
+    state.profileStats.commentsCount = Math.max(
+      0,
+      (state.profileStats.commentsCount || 0) - (localPost.comments?.length || 0)
+    );
+    state.profileStats.likesCount = Math.max(
+      0,
+      (state.profileStats.likesCount || 0) - (localPost.likes || 0)
+    );
+  }
+}
+
+async function handleDeletePost(postId) {
+  const confirmed = window.confirm('Delete this post? This cannot be undone.');
+
+  if (!confirmed) {
+    return;
+  }
+
+  const currentRoute = getRoute();
+  removePostFromLocalState(postId);
+
+  if (currentRoute.name === 'post') {
+    history.pushState({}, '', '/');
+  }
+
+  renderSidebar();
+  renderCurrentView();
+
+  try {
+    await apiFetch(`/api/posts/${postId}`, {
+      method: 'DELETE'
+    });
+
+    showToast('Post deleted.');
+
+    if (currentRoute.name === 'post') {
+      await refreshView({ skipLoading: true, refreshShell: true });
+    }
+  } catch (error) {
+    showToast(error.message, 'error');
+    await refreshView({ skipLoading: true, refreshShell: true });
   }
 }
 
@@ -1723,6 +2142,13 @@ document.addEventListener('click', async (event) => {
   const routeButton = event.target.closest('[data-route]');
   if (routeButton) {
     event.preventDefault();
+
+    if (needsOnboarding()) {
+      renderOnboardingModal();
+      showToast(`Join at least ${MIN_ONBOARDING_COMMUNITIES} communities to continue.`, 'error');
+      return;
+    }
+
     const targetPath = routeButton.dataset.route;
     closeProfileMenu();
     await navigateTo(targetPath);
@@ -1746,6 +2172,24 @@ document.addEventListener('click', async (event) => {
 
   const { action } = actionButton.dataset;
 
+  if (action === 'toggle-onboarding-community') {
+    const communityId = actionButton.dataset.communityId;
+
+    if (state.onboardingSelectedCommunityIds.has(communityId)) {
+      state.onboardingSelectedCommunityIds.delete(communityId);
+    } else {
+      state.onboardingSelectedCommunityIds.add(communityId);
+    }
+
+    renderOnboardingModal();
+    return;
+  }
+
+  if (action === 'submit-onboarding') {
+    await handleOnboardingSubmit();
+    return;
+  }
+
   if (action === 'reload-view') {
     await refreshView();
     return;
@@ -1756,8 +2200,36 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  if (action === 'leave-community') {
+    await handleLeaveCommunity(actionButton.dataset.communityId);
+    return;
+  }
+
   if (action === 'like-post') {
     await handleLikePost(actionButton.dataset.postId);
+    return;
+  }
+
+  if (action === 'toggle-comments') {
+    const postId = actionButton.dataset.postId;
+
+    if (state.openCommentPostIds.has(postId)) {
+      state.openCommentPostIds.delete(postId);
+    } else {
+      state.openCommentPostIds.add(postId);
+    }
+
+    renderCurrentView();
+    return;
+  }
+
+  if (action === 'toggle-save-post') {
+    toggleSavedPost(actionButton.dataset.postId);
+    return;
+  }
+
+  if (action === 'delete-post') {
+    await handleDeletePost(actionButton.dataset.postId);
     return;
   }
 
@@ -1789,6 +2261,12 @@ document.addEventListener('click', async (event) => {
   }
 
   if (action === 'open-post-modal') {
+    if (needsOnboarding()) {
+      renderOnboardingModal();
+      showToast(`Join at least ${MIN_ONBOARDING_COMMUNITIES} communities before posting.`, 'error');
+      return;
+    }
+
     openPostModal(actionButton.dataset.communityId || '');
     return;
   }
@@ -1830,7 +2308,7 @@ document.addEventListener('submit', async (event) => {
     await handleCreatePost(event.target);
   }
 
-  if (event.target.id === 'comment-form') {
+  if (event.target.matches('[data-comment-form]')) {
     event.preventDefault();
     await handleComment(event.target);
   }

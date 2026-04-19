@@ -28,7 +28,6 @@ form.addEventListener('submit', async (event) => {
     await apiFetch('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({
-        name: formData.get('name'),
         username: formData.get('username'),
         email: formData.get('email'),
         password: formData.get('password')
