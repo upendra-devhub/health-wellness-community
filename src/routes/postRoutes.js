@@ -10,6 +10,7 @@ const {
 } = require('../controllers/postController');
 const { requireApiAuth } = require('../middleware/auth');
 const { uploadPostImage } = require('../middleware/upload');
+const { uploadToClodinary } = require("../middleware/cloudnire.upload");
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.get('/', getPosts);
 router.post(
   '/',
   uploadPostImage,
+  uploadToClodinary,
   createPost
 );
 router.get('/:id', getPostById);

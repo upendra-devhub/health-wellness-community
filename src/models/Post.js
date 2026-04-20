@@ -34,6 +34,10 @@ const postSchema = new Schema({
     type: String,
     default: ''
   },
+  public_id : {
+    type : String,
+    default : ''
+  },
   likes: {
     type: Number,
     default: 0
