@@ -673,6 +673,10 @@ a {
   box-shadow: var(--shadow-soft);
 }
 
+*{
+  scrollbar-width: none;
+}
+
 .composer-card,
 .post-card,
 .profile-hero,
