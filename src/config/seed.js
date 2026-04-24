@@ -1,4 +1,6 @@
 const Community = require('../models/Community');
+const Resource = require('../models/Resource');
+const resourceSeedData = require('./resources.seed.json');
 
 const starterCommunities = [
   {
@@ -85,6 +87,20 @@ async function seedCommunities() {
   );
 }
 
+async function seedResources() {
+  await Promise.all(
+    resourceSeedData.map((resource) => Resource.updateOne(
+      {
+        title: resource.title,
+        category: resource.category
+      },
+      { $set: resource },
+      { upsert: true }
+    ))
+  );
+}
+
 module.exports = {
-  seedCommunities
+  seedCommunities,
+  seedResources
 };

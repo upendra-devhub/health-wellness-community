@@ -1,0 +1,542 @@
+[
+  {
+    "title": "Exercise: 7 Benefits of Regular Physical Activity",
+    "description": "Discover how regular exercise improves mood, boosts energy, and supports long-term health.",
+    "category": "fitness",
+    "source": "Mayo Clinic",
+    "readTime": "5 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/exercise/art-20048389",
+    "priority": 1
+  },
+  {
+    "title": "Fitness Program: 5 Steps to Get Started",
+    "description": "A simple guide to building a sustainable fitness routine, even if you're just starting out.",
+    "category": "fitness",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/fitness/art-20048269",
+    "priority": 2
+  },
+  {
+    "title": "Exercise and Physical Fitness Overview",
+    "description": "Learn the basics of physical fitness, including types of exercise and their health benefits.",
+    "category": "fitness",
+    "source": "MedlinePlus",
+    "readTime": "6 min read",
+    "url": "https://medlineplus.gov/exerciseandphysicalfitness.html",
+    "priority": 3
+  },
+  {
+    "title": "All Exercise and Fitness Articles",
+    "description": "Explore expert-backed insights and tips on exercise, training, and overall physical wellness.",
+    "category": "fitness",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics/exercise-and-fitness/all",
+    "priority": 4
+  },
+  {
+    "title": "The Big Health Benefits of Even Small Amounts of Exercise",
+    "description": "Even minimal physical activity can significantly improve health—here’s what science says.",
+    "category": "fitness",
+    "source": "Nature",
+    "readTime": "3 min read",
+    "url": "https://www.nature.com/articles/d41586-026-00237-0",
+    "priority": 5
+  },
+  {
+    "title": "Good Sleep for Good Health",
+    "description": "Learn how quality sleep improves brain function, mood, and overall physical health.",
+    "category": "sleep-health",
+    "source": "NIH",
+    "readTime": "5 min read",
+    "url": "https://newsinhealth.nih.gov/2021/04/good-sleep-good-health",
+    "priority": 1
+  },
+  {
+    "title": "About Sleep and Why It Matters",
+    "description": "Understand the importance of sleep and how it affects your daily performance and health.",
+    "category": "sleep-health",
+    "source": "CDC",
+    "readTime": "4 min read",
+    "url": "https://www.cdc.gov/sleep/about/index.html",
+    "priority": 2
+  },
+  {
+    "title": "Sleep Health: Expert Insights and Tips",
+    "description": "Explore practical advice and research-backed tips for improving sleep quality.",
+    "category": "sleep-health",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics/sleep/all",
+    "priority": 3
+  },
+  {
+    "title": "How to Improve Your Sleep Naturally",
+    "description": "Simple lifestyle changes that can help you fall asleep faster and sleep better.",
+    "category": "sleep-health",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics/improving-sleep/all",
+    "priority": 4
+  },
+  {
+    "title": "Can Weekend Sleep Fix Sleep Debt?",
+    "description": "Find out whether catching up on sleep during weekends actually helps recovery.",
+    "category": "sleep-health",
+    "source": "Harvard Health",
+    "readTime": "3 min read",
+    "url": "https://www.health.harvard.edu/topics/sleep/all?page=27",
+    "priority": 5
+  },
+  {
+    "title": "Weight Loss: 6 Strategies for Success",
+    "description": "Practical strategies to lose weight safely and maintain long-term results.",
+    "category": "weight-loss",
+    "source": "Mayo Clinic",
+    "readTime": "5 min read",
+    "url": "http://mayoclinic.org/healthy-lifestyle/weight-loss/in-depth/weight-loss/art-20047752",
+    "priority": 1
+  },
+  {
+    "title": "Steps for Losing Weight",
+    "description": "A step-by-step guide to building healthy habits for sustainable weight loss.",
+    "category": "weight-loss",
+    "source": "CDC",
+    "readTime": "4 min read",
+    "url": "https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html",
+    "priority": 2
+  },
+  {
+    "title": "Diet and Weight Loss Basics",
+    "description": "Understand how nutrition and calorie balance play a role in weight management.",
+    "category": "weight-loss",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics/diet-and-weight-loss",
+    "priority": 3
+  },
+  {
+    "title": "Weight Loss and Diet Articles Collection",
+    "description": "Explore a wide range of expert-backed insights on weight loss and nutrition.",
+    "category": "weight-loss",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics/diet-and-weight-loss/all",
+    "priority": 4
+  },
+  {
+    "title": "Losing Weight for Better Heart Health",
+    "description": "How maintaining a healthy weight supports cardiovascular health and overall well-being.",
+    "category": "weight-loss",
+    "source": "American Heart Association",
+    "readTime": "4 min read",
+    "url": "https://www.heart.org/en/healthy-living/healthy-eating/losing-weight",
+    "priority": 5
+  },
+  {
+    "title": "Yoga for Health: What Science Says",
+    "description": "Explore how yoga improves flexibility, mental clarity, and overall wellness.",
+    "category": "yoga",
+    "source": "NCCIH",
+    "readTime": "5 min read",
+    "url": "https://www.nccih.nih.gov/health/providers/digest/yoga-for-health-science",
+    "priority": 1
+  },
+  {
+    "title": "12 Benefits of Yoga Backed by Science",
+    "description": "From stress relief to improved flexibility, discover why yoga is beneficial.",
+    "category": "yoga",
+    "source": "Healthline",
+    "readTime": "4 min read",
+    "url": "https://www.healthline.com/nutrition/13-benefits-of-yoga",
+    "priority": 2
+  },
+  {
+    "title": "9 Key Benefits of Practicing Yoga",
+    "description": "Learn how yoga enhances both physical health and mental well-being.",
+    "category": "yoga",
+    "source": "Johns Hopkins Medicine",
+    "readTime": "4 min read",
+    "url": "https://www.hopkinsmedicine.org/health/wellness-and-prevention/9-benefits-of-yoga",
+    "priority": 3
+  },
+  {
+    "title": "Yoga: Types, Methods, and Risks",
+    "description": "Understand different yoga styles and how to practice safely.",
+    "category": "yoga",
+    "source": "Medical News Today",
+    "readTime": "5 min read",
+    "url": "https://www.medicalnewstoday.com/articles/286745",
+    "priority": 4
+  },
+  {
+    "title": "Yoga Research and Scientific Overview",
+    "description": "Dive into research-backed insights on yoga and its long-term health benefits.",
+    "category": "yoga",
+    "source": "NCCIH",
+    "readTime": "5 min read",
+    "url": "https://www.nccih.nih.gov/health/providers/digest/yoga-for-health-science",
+    "priority": 5
+  },
+  {
+    "title": "How Much Water Should You Drink Daily?",
+    "description": "Understand daily hydration needs and factors that affect water intake.",
+    "category": "hydration",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/nutrition-and-healthy-eating/in-depth/water/art-20044256",
+    "priority": 1
+  },
+  {
+    "title": "Water and Healthier Drink Choices",
+    "description": "Learn how proper hydration supports energy, focus, and overall health.",
+    "category": "hydration",
+    "source": "CDC",
+    "readTime": "4 min read",
+    "url": "https://www.cdc.gov/healthy-weight-growth/water-healthy-drinks/index.html",
+    "priority": 2
+  },
+  {
+    "title": "The Importance of Hydration",
+    "description": "Explore how staying hydrated impacts bodily functions and performance.",
+    "category": "hydration",
+    "source": "Harvard T.H. Chan School",
+    "readTime": "5 min read",
+    "url": "https://hsph.harvard.edu/news/the-importance-of-hydration/",
+    "priority": 3
+  },
+  {
+    "title": "Why Staying Hydrated Matters",
+    "description": "Simple insights into maintaining hydration for better health and energy.",
+    "category": "hydration",
+    "source": "Harvard Health",
+    "readTime": "4 min read",
+    "url": "https://www.health.harvard.edu/healthy-aging-and-longevity/the-importance-of-staying-hydrated",
+    "priority": 4
+  },
+  {
+    "title": "10 Reasons Why Hydration Is Important",
+    "description": "A quick overview of the benefits of drinking enough water every day.",
+    "category": "hydration",
+    "source": "National Council on Aging",
+    "readTime": "3 min read",
+    "url": "https://www.ncoa.org/article/10-reasons-why-hydration-is-important/",
+    "priority": 5
+  },
+  {
+    "title": "Mental Health: Understanding the Basics",
+    "description": "Learn what mental health means and why it is essential for overall well-being.",
+    "category": "mental-health",
+    "source": "WHO",
+    "readTime": "5 min read",
+    "url": "https://www.who.int/health-topics/mental-health",
+    "priority": 1
+  },
+  {
+    "title": "Mental Health Articles and Resources",
+    "description": "Explore a wide range of insights and guidance on emotional well-being.",
+    "category": "mental-health",
+    "source": "Mental Health Foundation",
+    "readTime": "5 min read",
+    "url": "https://www.mentalhealth.org.uk/explore-mental-health/articles",
+    "priority": 2
+  },
+  {
+    "title": "Mental Health: Expert Advice and Research",
+    "description": "Discover expert-backed tips for managing stress, anxiety, and mental wellness.",
+    "category": "mental-health",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics/mental-health/all",
+    "priority": 3
+  },
+  {
+    "title": "Top Research Articles on Mental Health",
+    "description": "Access research-driven insights into mental health trends and treatments.",
+    "category": "mental-health",
+    "source": "JMIR Mental Health",
+    "readTime": "6 min read",
+    "url": "https://mental.jmir.org/top-articles/overview",
+    "priority": 4
+  },
+  {
+    "title": "Exercise and Stress: How Movement Helps",
+    "description": "Learn how physical activity can reduce stress and improve mental health.",
+    "category": "mental-health",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/stress-management/in-depth/exercise-and-stress/art-20044469",
+    "priority": 5
+  },
+  {
+    "title": "Fitness Program: 5 Steps to Get Started",
+    "description": "A beginner-friendly guide to starting your fitness and running journey.",
+    "category": "running",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/fitness/art-20048269",
+    "priority": 1
+  },
+  {
+    "title": "7 Benefits of Regular Physical Activity",
+    "description": "Discover how consistent exercise improves endurance, heart health, and energy levels.",
+    "category": "running",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/exercise/art-20048389",
+    "priority": 2
+  },
+  {
+    "title": "Exercise and Physical Fitness Basics",
+    "description": "Understand the fundamentals of physical activity and building stamina.",
+    "category": "running",
+    "source": "MedlinePlus",
+    "readTime": "5 min read",
+    "url": "https://medlineplus.gov/exerciseandphysicalfitness.html",
+    "priority": 3
+  },
+  {
+    "title": "Adult Physical Activity Guidelines",
+    "description": "Official recommendations for staying active and maintaining fitness levels.",
+    "category": "running",
+    "source": "CDC",
+    "readTime": "4 min read",
+    "url": "https://www.cdc.gov/physical-activity-basics/guidelines/adults.html",
+    "priority": 4
+  },
+  {
+    "title": "Big Health Benefits of Small Exercise",
+    "description": "Even small amounts of activity can significantly improve overall health.",
+    "category": "running",
+    "source": "Nature",
+    "readTime": "3 min read",
+    "url": "https://www.nature.com/articles/d41586-026-00237-0",
+    "priority": 5
+  },
+  {
+    "title": "Health Topics and Everyday Wellness",
+    "description": "Explore a wide range of health topics for maintaining overall well-being.",
+    "category": "general-wellness",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics",
+    "priority": 1
+  },
+  {
+    "title": "Mental Health and Wellbeing Resources",
+    "description": "Guides and tools to support emotional and psychological health.",
+    "category": "general-wellness",
+    "source": "Mental Health Foundation",
+    "readTime": "5 min read",
+    "url": "https://www.mentalhealth.org.uk/explore-mental-health/articles",
+    "priority": 2
+  },
+  {
+    "title": "Why Hydration Is Essential",
+    "description": "Learn how proper hydration supports body functions and energy levels.",
+    "category": "general-wellness",
+    "source": "Harvard T.H. Chan School",
+    "readTime": "4 min read",
+    "url": "https://hsph.harvard.edu/news/the-importance-of-hydration/",
+    "priority": 3
+  },
+  {
+    "title": "Good Sleep for Better Health",
+    "description": "Understand the role of sleep in recovery, focus, and overall wellness.",
+    "category": "general-wellness",
+    "source": "NIH",
+    "readTime": "4 min read",
+    "url": "https://newsinhealth.nih.gov/2021/04/good-sleep-good-health",
+    "priority": 4
+  },
+  {
+    "title": "Adult Physical Activity Overview",
+    "description": "A quick guide to staying active and maintaining a balanced lifestyle.",
+    "category": "general-wellness",
+    "source": "CDC",
+    "readTime": "3 min read",
+    "url": "https://www.cdc.gov/physical-activity-basics/guidelines/adults.html",
+    "priority": 5
+  },
+  {
+    "title": "How Much Water Should You Drink?",
+    "description": "Understand hydration needs and how they impact nutrition and health.",
+    "category": "nutrition",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/nutrition-and-healthy-eating/in-depth/water/art-20044256",
+    "priority": 1
+  },
+  {
+    "title": "Healthy Drinks and Hydration",
+    "description": "Learn how beverage choices affect your diet and overall wellness.",
+    "category": "nutrition",
+    "source": "CDC",
+    "readTime": "4 min read",
+    "url": "https://www.cdc.gov/healthy-weight-growth/water-healthy-drinks/index.html",
+    "priority": 2
+  },
+  {
+    "title": "Diet and Weight Loss Basics",
+    "description": "Explore the relationship between nutrition, calories, and weight management.",
+    "category": "nutrition",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics/diet-and-weight-loss",
+    "priority": 3
+  },
+  {
+    "title": "Steps for Losing Weight",
+    "description": "Simple strategies for building sustainable eating habits.",
+    "category": "nutrition",
+    "source": "CDC",
+    "readTime": "4 min read",
+    "url": "https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html",
+    "priority": 4
+  },
+  {
+    "title": "Healthy Weight Management",
+    "description": "How proper nutrition supports heart health and long-term wellness.",
+    "category": "nutrition",
+    "source": "American Heart Association",
+    "readTime": "4 min read",
+    "url": "https://www.heart.org/en/healthy-living/healthy-eating/losing-weight",
+    "priority": 5
+  },
+  {
+    "title": "How to Recover After Exercise",
+    "description": "Learn effective recovery techniques to prevent injury and improve performance.",
+    "category": "recovery",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/exercise/art-20048389",
+    "priority": 1
+  },
+  {
+    "title": "Elements of a Balanced Fitness Routine",
+    "description": "Understand how recovery fits into a complete workout plan.",
+    "category": "recovery",
+    "source": "Mayo Clinic",
+    "readTime": "5 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/fitness-training/art-20044792",
+    "priority": 2
+  },
+  {
+    "title": "Exercise and Stress Management",
+    "description": "Discover how movement helps reduce stress and aids recovery.",
+    "category": "recovery",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/stress-management/in-depth/exercise-and-stress/art-20044469",
+    "priority": 3
+  },
+  {
+    "title": "Benefits of Physical Activity",
+    "description": "How exercise contributes to faster recovery and long-term health.",
+    "category": "recovery",
+    "source": "Mayo Clinic Health System",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinichealthsystem.org/hometown-health/speaking-of-health/physical-activity-benefits-and-simple-steps",
+    "priority": 4
+  },
+  {
+    "title": "Adult Activity and Recovery Basics",
+    "description": "Guidelines for balancing activity and rest effectively.",
+    "category": "recovery",
+    "source": "CDC",
+    "readTime": "3 min read",
+    "url": "https://www.cdc.gov/physical-activity-basics/guidelines/adults.html",
+    "priority": 5
+  },
+  {
+    "title": "Elements of Strength Training",
+    "description": "A complete guide to building strength with a structured workout plan.",
+    "category": "strength-training",
+    "source": "Mayo Clinic",
+    "readTime": "5 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/exercise/art-20048389",
+    "priority": 1
+  },
+  {
+    "title": "7 Benefits of Physical Activity",
+    "description": "Understand how strength training improves muscle and overall fitness.",
+    "category": "strength-training",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/exercise/art-20048389",
+    "priority": 2
+  },
+  {
+    "title": "Fitness Basics for Beginners",
+    "description": "Learn the fundamentals of starting a strength training routine.",
+    "category": "strength-training",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/fitness/basics/fitness-basics/hlv-20049447",
+    "priority": 3
+  },
+  {
+    "title": "The Five Elements of Fitness",
+    "description": "Explore strength, endurance, flexibility, and more in a balanced routine.",
+    "category": "strength-training",
+    "source": "Mayo Clinic Health System",
+    "readTime": "5 min read",
+    "url": "https://www.mayoclinichealthsystem.org/hometown-health/speaking-of-health/the-5-elements-of-fitness",
+    "priority": 4
+  },
+  {
+    "title": "Adult Physical Activity Guidelines",
+    "description": "Recommendations for incorporating strength training into your routine.",
+    "category": "strength-training",
+    "source": "CDC",
+    "readTime": "3 min read",
+    "url": "https://www.cdc.gov/physical-activity-basics/guidelines/adults.html",
+    "priority": 5
+  },
+  {
+    "title": "Meditation: A Simple Way to Reduce Stress",
+    "description": "Learn how meditation helps calm the mind and improve focus.",
+    "category": "meditation",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/tests-procedures/meditation/in-depth/meditation/art-20045858",
+    "priority": 1
+  },
+  {
+    "title": "Understanding Mental Health",
+    "description": "Explore the importance of mental well-being in daily life.",
+    "category": "meditation",
+    "source": "WHO",
+    "readTime": "5 min read",
+    "url": "https://www.who.int/health-topics/mental-health#tab=tab_1",
+    "priority": 2
+  },
+  {
+    "title": "Mental Health Articles and Insights",
+    "description": "A collection of expert advice on mindfulness and emotional health.",
+    "category": "meditation",
+    "source": "Harvard Health",
+    "readTime": "5 min read",
+    "url": "https://www.health.harvard.edu/topics/mental-health/all",
+    "priority": 3
+  },
+  {
+    "title": "Top Mental Health Research Articles",
+    "description": "Explore research-backed insights into meditation and mental wellness.",
+    "category": "meditation",
+    "source": "JMIR Mental Health",
+    "readTime": "6 min read",
+    "url": "https://mental.jmir.org/top-articles/overview",
+    "priority": 4
+  },
+  {
+    "title": "Exercise and Stress Relief",
+    "description": "How combining movement and mindfulness improves mental clarity.",
+    "category": "meditation",
+    "source": "Mayo Clinic",
+    "readTime": "4 min read",
+    "url": "https://www.mayoclinic.org/healthy-lifestyle/stress-management/in-depth/exercise-and-stress/art-20044469",
+    "priority": 5
+  }
+]

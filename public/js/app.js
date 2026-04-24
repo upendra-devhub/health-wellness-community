@@ -43,6 +43,7 @@ const state = {
   },
   communities: [],
   health: null,
+  wellnessPicks: [],
   weeklyData: [],
   selectedDay: '',
   healthLogDate: '',
@@ -113,6 +114,10 @@ function getRoute() {
 
   if (path === '/health') {
     return { name: 'health' };
+  }
+
+  if (path === '/wellness-picks') {
+    return { name: 'wellness-picks' };
   }
 
   const communityMatch = path.match(/^\/community\/([^/]+)$/);
@@ -481,6 +486,23 @@ function getJoinedCommunities() {
   return state.communities.filter((community) => joinedIds.has(community._id));
 }
 
+function normalizeCommunityCategory(value = '') {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function getJoinedCommunityCategories() {
+  return [...new Set(
+    getJoinedCommunities()
+      .map((community) => normalizeCommunityCategory(community.communityName))
+      .filter(Boolean)
+  )];
+}
+
 function getTrendingCommunities() {
   const joinedIds = new Set((state.profile?.communitiesJoined || []).map((community) => community._id));
   return state.communities
@@ -780,6 +802,69 @@ function renderProfileTabs() {
   `;
 }
 
+function renderWellnessCard(resource) {
+  const resourceUrl = String(resource?.url || '').trim();
+  const sourceLabel = escapeHtml(resource?.source || 'Wellness Source');
+  const title = escapeHtml(resource?.title || 'Untitled resource');
+  const description = escapeHtml(resource?.description || '');
+  const readTime = escapeHtml(resource?.readTime || '');
+  const actionMarkup = resourceUrl
+    ? `
+        <a class="soft-button wellness-card__link" href="${escapeHtml(resourceUrl)}" target="_blank" rel="noopener noreferrer">
+          <span>Read more</span>
+          <span class="material-symbols-outlined">arrow_outward</span>
+        </a>
+      `
+    : `
+        <button class="soft-button wellness-card__link" type="button" disabled>
+          <span>Read more</span>
+          <span class="material-symbols-outlined">arrow_outward</span>
+        </button>
+      `;
+
+  return `
+    <article class="health-card wellness-card">
+      <div class="wellness-card__meta">
+        <span class="micro-chip">${sourceLabel}</span>
+        <span class="wellness-card__time">${readTime}</span>
+      </div>
+      <div class="wellness-card__copy">
+        <h4>${title}</h4>
+        <p class="wellness-card__description">${description}</p>
+      </div>
+      <div class="wellness-card__footer">
+        ${actionMarkup}
+      </div>
+    </article>
+  `;
+}
+
+function renderWellnessPicksBody() {
+  const joinedCategories = getJoinedCommunityCategories();
+
+  if (!joinedCategories.length) {
+    return `
+      <article class="health-card wellness-card wellness-card--empty">
+        <p>Join communities to see personalized wellness picks ✨</p>
+      </article>
+    `;
+  }
+
+  if (!state.wellnessPicks.length) {
+    return `
+      <article class="health-card wellness-card wellness-card--empty">
+        <p>No resources available right now</p>
+      </article>
+    `;
+  }
+
+  return `
+    <div class="wellness-picks-list">
+      ${state.wellnessPicks.map((resource) => renderWellnessCard(resource)).join('')}
+    </div>
+  `;
+}
+
 function renderSidebar() {
   const profileName = state.profile?.name || 'Soft Health';
   elements.headerAvatar.innerHTML = renderAvatar(state.profile || { name: profileName }, 'small');
@@ -828,15 +913,7 @@ function renderSidebar() {
 
   const health = state.health || { waterIntake: 0, waterGoal: 2500, hydrationPercent: 0, steps: 0, stepsPercent: 0 };
   elements.healthSidebar.innerHTML = `
-    <article class="health-card">
-      <div class="progress-line">
-        <span>Daily Water</span>
-        <strong>${escapeHtml(formatWater(health.waterIntake))} / ${escapeHtml(formatWater(health.waterGoal))}</strong>
-      </div>
-      <div class="progress-bar">
-        <span style="width:${health.hydrationPercent}%"></span>
-      </div>
-    </article>
+
 
     <article class="health-card">
       <div class="ring-row">
@@ -869,6 +946,7 @@ function renderSidebar() {
   `;
 
   elements.profileStatsSidebar.innerHTML = `
+  
     <div class="stat-panel__grid">
       <div class="profile-stat">
         <strong>${formatCompactNumber(state.profileStats.postsCount)}</strong>
@@ -909,17 +987,11 @@ function renderSidebar() {
     if (route && window.location.pathname === route) {
       item.classList.add('is-active');
     }
-    if (window.location.pathname.startsWith('/community/') && item.dataset.action === 'open-first-community') {
-      item.classList.add('is-active');
-    }
   });
 
   document.querySelectorAll('.mobile-nav__item').forEach((item) => {
     item.classList.remove('is-active');
     if (item.dataset.route === window.location.pathname) {
-      item.classList.add('is-active');
-    }
-    if (window.location.pathname.startsWith('/community/') && item.dataset.action === 'open-first-community') {
       item.classList.add('is-active');
     }
   });
@@ -1163,7 +1235,6 @@ function renderHomeView() {
   elements.viewRoot.innerHTML = `
     <section class="page-heading">
       <h1>Soft, social, and centered on your wellness rhythm.</h1>
-      <p>The feed stays true to the Stitch reference while pulling real posts from the communities you have joined.</p>
     </section>
 
     <div class="filter-row">
@@ -1183,6 +1254,17 @@ function renderHomeView() {
           { tone: 'feed' }
         )
       : renderCommunitySuggestions()}
+  `;
+}
+
+function renderWellnessPicksView() {
+  elements.viewRoot.innerHTML = `
+    <section class="page-heading">
+      <h1>Wellness Picks</h1>
+      <p>Personalized health resources curated from the communities you have joined.</p>
+    </section>
+
+    ${renderWellnessPicksBody()}
   `;
 }
 
@@ -1591,6 +1673,11 @@ function renderCurrentView() {
     return;
   }
 
+  if (route.name === 'wellness-picks') {
+    renderWellnessPicksView();
+    return;
+  }
+
   if (route.name === 'community') {
     renderCommunityView();
     return;
@@ -1644,6 +1731,19 @@ async function loadShellData(options = {}) {
     persistSavedPostIds();
   } else {
     state.savedPosts = [];
+  }
+
+  const joinedCommunityCategories = getJoinedCommunityCategories();
+  if (joinedCommunityCategories.length) {
+    try {
+      const resourceResponse = await apiFetch('/api/resources/picks');
+      state.wellnessPicks = Array.isArray(resourceResponse.data) ? resourceResponse.data : [];
+    } catch (error) {
+      state.wellnessPicks = [];
+      console.error('Failed to load wellness picks.', error);
+    }
+  } else {
+    state.wellnessPicks = [];
   }
 
   state.shellHydrated = true;
@@ -1704,8 +1804,9 @@ async function refreshView(options = {}) {
 
   try {
     await loadShellData({ force: options.refreshShell });
+    const route = getRoute();
 
-    if (needsOnboarding()) {
+    if (needsOnboarding() && route.name !== 'wellness-picks') {
       renderSidebar();
       renderOnboardingGate();
       renderOnboardingModal();
@@ -1777,6 +1878,8 @@ function applyCommunityLeaveToLocalState(communityId) {
 
   state.profileStats.communitiesCount = Math.max(0, (state.profileStats.communitiesCount || 0) - 1);
   state.homePosts = state.homePosts.filter((post) => getPostCommunity(post)?._id !== normalizedCommunityId);
+  const joinedCategories = new Set(getJoinedCommunityCategories());
+  state.wellnessPicks = state.wellnessPicks.filter((resource) => joinedCategories.has(resource.category));
 
   if (state.currentCommunity?._id === normalizedCommunityId) {
     state.currentCommunity = {
@@ -2143,7 +2246,7 @@ document.addEventListener('click', async (event) => {
   if (routeButton) {
     event.preventDefault();
 
-    if (needsOnboarding()) {
+    if (needsOnboarding() && routeButton.dataset.route !== '/wellness-picks') {
       renderOnboardingModal();
       showToast(`Join at least ${MIN_ONBOARDING_COMMUNITIES} communities to continue.`, 'error');
       return;

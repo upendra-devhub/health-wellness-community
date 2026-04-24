@@ -11,10 +11,13 @@ require("dotenv").config();
 
 const app = require('./src/app');
 const { port } = require('./src/config/env');
-const { seedCommunities } = require('./src/config/seed');
+const { seedCommunities, seedResources } = require('./src/config/seed');
 
 async function startServer() {
-  await seedCommunities();
+  await Promise.all([
+    seedCommunities(),
+    seedResources()
+  ]);
 
   app.listen(port, () => {
     console.log(`Health Wellness app running on http://localhost:${port}`);

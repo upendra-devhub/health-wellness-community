@@ -15,35 +15,39 @@
   <div id="onboarding-root"></div>
 
   <header class="topbar">
-    <div class="topbar__brand-group">
-      <a href="/" class="brand" data-route="/">Soft Health</a>
-      <label class="searchbar">
-        <span class="material-symbols-outlined">search</span>
-        <input id="global-search" type="search" placeholder="Search communities, experts..." autocomplete="off">
-      </label>
+    <div class="left">
+      <div class="topbar__brand-group">
+        <a href="/" class="brand" data-route="/">Soft Health</a>
+        <label class="searchbar">
+          <span class="material-symbols-outlined">search</span>
+          <input id="global-search" type="search" placeholder="Search communities, experts..." autocomplete="off">
+        </label>
+      </div>
     </div>
-
-    <div class="topbar__actions">
-      <button
-        id="create-post-trigger"
-        class="icon-button topbar__create-button"
-        type="button"
-        aria-label="Create post"
-        aria-haspopup="dialog"
-        aria-controls="post-modal"
-        data-action="open-post-modal">
-        <span class="material-symbols-outlined">add</span>
-      </button>
-      <button id="theme-toggle-button" class="icon-button topbar__theme-button" type="button" aria-label="Switch to dark mode">
-        <span id="theme-toggle-icon" class="material-symbols-outlined">dark_mode</span>
-      </button>
-
-      <div class="menu-shell">
-        <button id="profile-menu-button" class="avatar-button" type="button" aria-label="Open profile menu" aria-expanded="false" aria-controls="profile-menu">
-          <span id="header-avatar"></span>
+    <div class="right">
+      
+      <div class="topbar__actions">
+        <button
+          id="create-post-trigger"
+          class="icon-button topbar__create-button"
+          type="button"
+          aria-label="Create post"
+          aria-haspopup="dialog"
+          aria-controls="post-modal"
+          data-action="open-post-modal">
+          <span class="material-symbols-outlined">add</span>
         </button>
-
-        <div id="profile-menu" class="dropdown-menu profile-menu" aria-hidden="true"></div>
+        <button id="theme-toggle-button" class="icon-button topbar__theme-button" type="button" aria-label="Switch to dark mode">
+          <span id="theme-toggle-icon" class="material-symbols-outlined">dark_mode</span>
+        </button>
+  
+        <div class="menu-shell">
+          <button id="profile-menu-button" class="avatar-button" type="button" aria-label="Open profile menu" aria-expanded="false" aria-controls="profile-menu">
+            <span id="header-avatar"></span>
+          </button>
+  
+          <div id="profile-menu" class="dropdown-menu profile-menu" aria-hidden="true"></div>
+        </div>
       </div>
     </div>
   </header>
@@ -51,26 +55,21 @@
   <div class="app-shell">
     <aside class="sidebar sidebar--left">
       <div class="sidebar__section">
-        <h2>Communities</h2>
-        <p>Join the sanctuary</p>
+
       </div>
 
       <nav class="sidebar-nav">
         <button class="sidebar-nav__item" data-route="/">
           <span class="material-symbols-outlined">explore</span>
-          <span>Discover</span>
-        </button>
-        <button class="sidebar-nav__item" data-route="/profile">
-          <span class="material-symbols-outlined">person</span>
-          <span>Your Profile</span>
+          <span>Wellness Feed</span>
         </button>
         <button class="sidebar-nav__item" data-route="/health">
-          <span class="material-symbols-outlined">menu_book</span>
-          <span>Dashboard</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-pulse-icon lucide-heart-pulse"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/><path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+          <span>Health Pulse</span>
         </button>
-        <button class="sidebar-nav__item" data-action="open-first-community">
-          <span class="material-symbols-outlined">verified</span>
-          <span>Communities</span>
+        <button class="sidebar-nav__item" data-route="/wellness-picks">
+          <span class="material-symbols-outlined">auto_stories</span>
+          <span>Wellness Picks</span>
         </button>
       </nav>
 
@@ -92,7 +91,10 @@
         </h3>
         <div id="health-sidebar" class="sidebar-stack"></div>
       </section>
-
+              <h3 class="sidebar-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-icon lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile at a Glance</span> 
+        </h3>
       <section id="profile-stats-sidebar" class="stat-panel"></section>
 
       <section>
@@ -120,9 +122,9 @@
       aria-controls="post-modal">
       <span class="material-symbols-outlined">add</span>
     </button>
-    <button type="button" class="mobile-nav__item" data-action="open-first-community">
-      <span class="material-symbols-outlined">groups</span>
-      <span>Circle</span>
+    <button type="button" class="mobile-nav__item" data-route="/wellness-picks">
+      <span class="material-symbols-outlined">auto_stories</span>
+      <span>Picks</span>
     </button>
     <button type="button" class="mobile-nav__item" data-route="/profile">
       <span class="material-symbols-outlined">person</span>

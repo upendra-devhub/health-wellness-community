@@ -7,6 +7,7 @@ const userRoutes = require('./routes/userRoutes');
 const communityRoutes = require('./routes/communityRoutes');
 const postRoutes = require('./routes/postRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
 const pageRoutes = require('./routes/pageRoutes');
 const { notFound } = require('./middleware/notFound');
 const { errorHandler } = require('./middleware/errorHandler');
@@ -28,6 +29,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/communities', communityRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/resources', resourceRoutes);
 app.use('/', pageRoutes);
 
 app.use(notFound);
