@@ -7,8 +7,18 @@ command = "vercel dev"
 port = 3000
 
 [[redirects]]
+from = "/"
+to = "/landing.html"
+status = 200
+
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/index:path"
+status = 200
+
+[[redirects]]
 from = "/*"
-to = "/api/index.js"
+to = "/landing.html"
 status = 200
 
 [headers]
