@@ -4,6 +4,9 @@ A full-stack wellness community web app built with HTML, CSS, vanilla JavaScript
 
 This project combines community posting, personalized wellness resources, and health tracking inside a single authenticated app experience. Users can create an account, join wellness communities, share posts, like and comment on posts, track activity, and view personalized wellness picks based on the communities they join.
 
+## Link to webpage
+  https://healthopia-8bvr.onrender.com/
+
 ## What the Project Includes
 
 ### Core product areas
@@ -47,6 +50,9 @@ This project combines community posting, personalized wellness resources, and he
 - Node.js
 - Express
 - MongoDB with Mongoose
+
+### Deployment
+  Render
 
 ### Other libraries
 
